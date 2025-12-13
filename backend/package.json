@@ -19,12 +19,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
     "http-status": "^2.1.0",
     "jsonwebtoken": "^9.0.3",
+    "module-alias": "^2.2.3",
     "mongoose": "^8.20.2",
     "zod": "^4.1.13"
   },
@@ -38,5 +40,8 @@
     "ts-node-dev": "^2.0.0",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3"
+  },
+  "_moduleAliases": {
+    "@app": "dist/app"
   }
 }

@@ -1,4 +1,4 @@
-import { USER_ROLES, USER_STATUS } from "./user.constants";
+import { USER_ROLES, USER_STATUS } from "@app/types/user";
 
 export interface IUser {
   name: string;

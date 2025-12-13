@@ -1,8 +1,8 @@
+import httpStatus from "http-status";
+import { JwtPayload } from "jsonwebtoken";
+import AppError from "@app/errors/AppError";
 import { UserModel } from "./user.model";
 import { IUser } from "./user.interface";
-import httpStatus from "http-status";
-import AppError from "../../errors/AppError";
-import { JwtPayload } from "jsonwebtoken";
 
 // Create a new user (student / owner / staff)
 const createUserService = async (payload: Partial<IUser>) => {

@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status";
-import catchAsync from "src/app/utils/catchAsync";
-import sendResponse from "src/app/utils/sendResponse";
+import catchAsync from "@app/utils/catchAsync";
+import sendResponse from "@app/utils/sendResponse";
 import { UserServices } from "./user.services";
-import AppError from "@errors/AppError";
+import AppError from "@app/errors/AppError";
 
 // Create a new user
 const createUser = catchAsync(async (req: Request, res: Response) => {

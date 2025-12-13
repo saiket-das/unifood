@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import "module-alias/register";
 import { Server } from "http";
 import app from "./app";
 import config from "./app/config";

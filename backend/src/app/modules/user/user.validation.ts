@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { USER_ROLES } from "./user.constants";
+import { USER_ROLES } from "@app/types/user";
 
 export const createUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters long"),
