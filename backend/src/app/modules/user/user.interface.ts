@@ -1,6 +1,7 @@
-import { USER_ROLES, USER_STATUS } from "@app/types/user";
+import { Model } from "mongoose";
+import { USER_ROLES, USER_STATUS } from "../../types/user";
 
-export interface IUser {
+export interface UserProps {
   name: string;
   email: string;
   password: string;
@@ -8,4 +9,15 @@ export interface IUser {
   status?: (typeof USER_STATUS)[keyof typeof USER_STATUS];
   createdAt?: Date;
   updatedAt?: Date;
+}
+
+export interface StaticUserModel extends Model<UserProps> {
+  // is user exists
+  isUserExists(id: string): Promise<UserProps>;
+
+  // given password & Database password match
+  isPasswordMatched(
+    plainPassword: string,
+    hashPassword: string
+  ): Promise<Boolean>;
 }

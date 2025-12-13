@@ -1,4 +1,4 @@
-import { USER_ROLE } from "@app/types/user";
+import { UserRoleProps } from "../../types/user";
 
 export interface LoginPayload {
   email: string;
@@ -7,5 +7,5 @@ export interface LoginPayload {
 
 export interface JwtPayloadCustom {
   userId: string;
-  role: USER_ROLE;
+  role: UserRoleProps;
 }

@@ -8,7 +8,10 @@ let server: Server;
 
 async function main() {
   try {
-    await mongoose.connect(config.database_url as string);
+    mongoose
+      .connect(process.env.DATABASE_URL!)
+      .then(() => console.log("MongoDB connected!"))
+      .catch((err) => console.error(err));
 
     server = app.listen(config.port, () => {
       console.log(`Server is listening on port ${config.port}`);

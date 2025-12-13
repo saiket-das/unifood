@@ -1,25 +1,15 @@
 import { Request, Response } from "express";
 import httpStatus from "http-status";
-import catchAsync from "@app/utils/catchAsync";
-import sendResponse from "@app/utils/sendResponse";
+import catchAsync from "../../utils/catchAsync";
+import sendResponse from "../../utils/sendResponse";
 import { UserServices } from "./user.services";
-import AppError from "@app/errors/AppError";
-
-// Create a new user
-const createUser = catchAsync(async (req: Request, res: Response) => {
-  const payload = req.body;
-  const user = await UserServices.createUserService(payload);
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.CREATED,
-    message: "User created successfully!",
-    data: user,
-  });
-});
+import AppError from "../../errors/AppError";
 
 // Get current logged-in user
 const getMe = catchAsync(async (req: Request, res: Response) => {
   const user = req.user;
+  console.log("reques:", req.user);
+  console.log("response:", res);
   if (!user) {
     throw new AppError(httpStatus.UNAUTHORIZED, "User not authenticated");
   }
@@ -70,7 +60,6 @@ const deleteUser = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const UserControllers = {
-  createUser,
   getMe,
   changeStatus,
   getAllUsers,

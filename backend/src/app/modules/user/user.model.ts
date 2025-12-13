@@ -1,24 +1,13 @@
-import mongoose, { Schema, model } from "mongoose";
-import { IUser } from "./user.interface";
-import { USER_ROLES, USER_STATUS } from "@app/types/user";
+import { Schema, model } from "mongoose";
+import bcrypt from "bcrypt";
+import { StaticUserModel, UserProps } from "./user.interface";
+import { USER_ROLES, USER_STATUS } from "../../types/user";
 
-const userSchema = new Schema<IUser>(
+const userSchema = new Schema<UserProps>(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-    },
-    password: {
-      type: String,
-      required: true,
-    },
+    name: { type: String, required: true, trim: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
+    password: { type: String, required: true },
     role: {
       type: String,
       enum: Object.values(USER_ROLES),
@@ -33,4 +22,15 @@ const userSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
-export const UserModel = model<IUser>("User", userSchema);
+userSchema.statics.isUserExists = async function (id: string) {
+  return await UserModel.findOne({ id }).select("+password");
+};
+
+userSchema.statics.isPasswordMatched = async function (
+  plainPassword: string,
+  hashPassword
+) {
+  return await bcrypt.compare(plainPassword, hashPassword);
+};
+
+export const UserModel = model<UserProps, StaticUserModel>("User", userSchema);

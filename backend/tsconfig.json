@@ -1,6 +1,6 @@
 {
-  "include": ["src", "src/**/*"], // which files to compile
-  "exclude": ["node_modules"], // which files to skip
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"], // which files to skip
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig to read more about this file */
 
@@ -31,16 +31,10 @@
     "rootDir": "./src" /* Specify the root folder within your source files. */,
     // "moduleResolution": "node10",                     /* Specify how TypeScript looks up a file from a given module specifier. */
     // "ignoreDeprecations": "6.0",
-    "baseUrl": ".",
-    "paths": {
-      // "@utils/*": ["src/app/utils/*"],
-      // "@errors/*": ["src/app/errors/*"],
-      // "@config/*": ["src/app/config/*"],
-      // "@user/*": ["src/app/modules/user/*"],
-      // "@food/*": ["src/app/modules/food/*"],
-      // "@order/*": ["src/app/modules/order/*"]
-      "@app/*": ["src/app/*"]
-    } /* Specify a set of entries that re-map imports to additional lookup locations. */,
+    // "baseUrl": ".",
+    // "paths": {
+    //   "@app/*": ["src/app/*"]
+    // } /* Specify a set of entries that re-map imports to additional lookup locations. */,
     // "rootDirs": [],                                   /* Allow multiple folders to be treated as one when resolving modules. */
     // "typeRoots": [],                                  /* Specify multiple folders that act like './node_modules/@types'. */
     // "types": [],                                      /* Specify type package names to be included without being referenced in a source file. */

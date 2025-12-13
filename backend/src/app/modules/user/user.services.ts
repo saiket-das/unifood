@@ -1,21 +1,8 @@
 import httpStatus from "http-status";
 import { JwtPayload } from "jsonwebtoken";
-import AppError from "@app/errors/AppError";
+import AppError from "../../errors/AppError";
 import { UserModel } from "./user.model";
-import { IUser } from "./user.interface";
-
-// Create a new user (student / owner / staff)
-const createUserService = async (payload: Partial<IUser>) => {
-  const existingUser = await UserModel.findOne({ email: payload.email });
-  if (existingUser) {
-    throw new AppError(httpStatus.CONFLICT, "Email already exists!");
-  }
-
-  const newUser = await UserModel.create(payload);
-  if (!newUser)
-    throw new AppError(httpStatus.BAD_REQUEST, "Failed to create user!");
-  return newUser;
-};
+import { UserProps } from "./user.interface";
 
 // Get current user
 const getMeService = async (user: JwtPayload) => {
@@ -51,7 +38,6 @@ const deleteUserService = async (userId: string) => {
 };
 
 export const UserServices = {
-  createUserService,
   getMeService,
   changeStatusService,
   getAllUsersService,

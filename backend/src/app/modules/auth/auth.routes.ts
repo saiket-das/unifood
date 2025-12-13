@@ -1,9 +1,15 @@
-import { Router } from "express";
-import { registerUser, loginUser } from "./auth.controller";
+import express from "express";
+import { AuthControllers } from "./auth.controllers";
 
-const router = Router();
+const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+// Student registration
+router.post("/register/student", AuthControllers.registerStudent);
 
-export default router;
+// Restaurant owner registration
+router.post("/register/owner", AuthControllers.registerOwner);
+
+// Login
+router.post("/login", AuthControllers.login);
+
+export const AuthRoutes = router;
