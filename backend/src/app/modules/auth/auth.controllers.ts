@@ -4,32 +4,10 @@ import sendResponse from "../../utils/sendResponse";
 import { AuthServices } from "./auth.services";
 import httpStatus from "http-status";
 
-// Student Registration
-const registerStudent = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthServices.registerStudentService(req.body);
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.CREATED,
-    message: "Student registered successfully",
-    data: result,
-  });
-});
-
-// Restaurant Owner Registration
-const registerOwner = catchAsync(async (req: Request, res: Response) => {
-  const result = await AuthServices.registerOwnerService(req.body);
-  sendResponse(res, {
-    success: true,
-    statusCode: httpStatus.CREATED,
-    message: "Restaurant owner registered successfully",
-    data: result,
-  });
-});
-
-// Login
+// LOGIN (Students, Owner, Staff)
 const login = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.loginUserService(req.body);
-  sendResponse(res, {
+  return sendResponse(res, {
     success: true,
     statusCode: httpStatus.OK,
     message: "Login successful",
@@ -38,7 +16,5 @@ const login = catchAsync(async (req: Request, res: Response) => {
 });
 
 export const AuthControllers = {
-  registerStudent,
-  registerOwner,
   login,
 };

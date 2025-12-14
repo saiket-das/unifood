@@ -13,3 +13,8 @@ export const USER_STATUS = {
 } as const;
 
 export type UserStatusProps = (typeof USER_STATUS)[keyof typeof USER_STATUS];
+
+export enum USER_APPS {
+  FOOD_APP = "FOOD_APP",
+  OWNER_DASHBOARD = "OWNER_DASHBOARD",
+}

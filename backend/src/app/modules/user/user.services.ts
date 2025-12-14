@@ -1,8 +1,40 @@
 import httpStatus from "http-status";
+import bcrypt from "bcryptjs";
 import { JwtPayload } from "jsonwebtoken";
 import AppError from "../../errors/AppError";
 import { UserModel } from "./user.model";
-import { UserProps } from "./user.interface";
+import { RegisterPayload } from "../auth/auth.interface";
+import { USER_APPS, USER_ROLES } from "../../types/user";
+
+export const registerStudentService = async (payload: RegisterPayload) => {
+  const existingUser = await UserModel.findOne({ email: payload.email });
+  if (existingUser) throw new AppError(400, "Email already exists");
+
+  const user = await UserModel.create({
+    name: payload.name,
+    email: payload.email,
+    password: payload.password,
+    role: USER_ROLES.STUDENT,
+    allowedApps: [USER_APPS.FOOD_APP],
+  });
+
+  return user;
+};
+
+export const registerOwnerService = async (payload: RegisterPayload) => {
+  const existingUser = await UserModel.findOne({ email: payload.email });
+  if (existingUser) throw new AppError(400, "Email already exists");
+
+  const user = await UserModel.create({
+    name: payload.name,
+    email: payload.email,
+    password: payload.password,
+    role: USER_ROLES.OWNER,
+    allowedApps: [USER_APPS.OWNER_DASHBOARD],
+  });
+
+  return user;
+};
 
 // Get current user
 const getMeService = async (user: JwtPayload) => {
@@ -38,6 +70,8 @@ const deleteUserService = async (userId: string) => {
 };
 
 export const UserServices = {
+  registerStudentService,
+  registerOwnerService,
   getMeService,
   changeStatusService,
   getAllUsersService,

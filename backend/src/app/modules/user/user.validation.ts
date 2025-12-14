@@ -1,21 +1,31 @@
 import { z } from "zod";
-import { USER_ROLES } from "../../types/user";
+import { USER_STATUS } from "../../types/user";
 
-export const createUserSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters long"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-  role: z
-    .enum([USER_ROLES.STUDENT, USER_ROLES.OWNER, USER_ROLES.STAFF])
-    .optional(),
+// Register User (Student / Owner)
+
+const registerUserSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Name must be at least 2 characters long")
+    .max(50, "Name must be less than 50 characters"),
+  email: z.email("Invalid email address"),
+  password: z
+    .string()
+    .min(6, "Password must be at least 6 characters long")
+    .max(100),
 });
 
-export const updateUserSchema = z.object({
-  name: z.string().min(2).optional(),
-  email: z.string().email().optional(),
+// Update User (Admin / Owner / Profile)
+const updateUserSchema = z.object({
+  name: z.string().min(2).max(50).optional(),
+  email: z.email().optional(),
   password: z.string().min(6).optional(),
-  role: z
-    .enum([USER_ROLES.STUDENT, USER_ROLES.OWNER, USER_ROLES.STAFF])
+  status: z
+    .enum(Object.values(USER_STATUS) as [string, ...string[]])
     .optional(),
-  status: z.enum(["active", "inactive"]).optional(),
 });
+
+export const UserValidations = {
+  registerUserSchema,
+  updateUserSchema,
+};

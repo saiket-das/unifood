@@ -1,16 +1,30 @@
 import { Router } from "express";
 import { UserControllers } from "./user.controllers";
-import authMiddleware from "../../middlewares/auth";
+import auth from "../../middlewares/auth";
 import { USER_ROLES } from "../../types/user";
-
-// import { authMiddleware } from "../../middlewares/authMiddleware";
+import validateRequest from "../../middlewares/validateRequest";
+import { UserValidations } from "./user.validation";
 
 const router = Router();
 
-// Protected routes
+// Student registration
+router.post(
+  "/register-student",
+  validateRequest(UserValidations.registerUserSchema),
+  UserControllers.registerStudent
+);
+
+// Owner registration
+router.post(
+  "/register-owner",
+  validateRequest(UserValidations.registerUserSchema),
+  UserControllers.registerOwner
+);
+
+// Others
 router.get(
   "/me",
-  authMiddleware(
+  auth(
     USER_ROLES.ADMIN,
     USER_ROLES.OWNER,
     USER_ROLES.STAFF,
@@ -18,12 +32,24 @@ router.get(
   ),
   UserControllers.getMe
 );
+
 router.patch(
   "/status/:id",
-  authMiddleware(USER_ROLES.ADMIN),
+  auth(USER_ROLES.ADMIN),
   UserControllers.changeStatus
 );
-router.get("/", authMiddleware(USER_ROLES.ADMIN), UserControllers.getAllUsers);
-router.delete("/:id", UserControllers.deleteUser);
+router.get("/", auth(USER_ROLES.ADMIN), UserControllers.getAllUsers);
+
+// Delete a user (student, owner, staff)
+router.delete(
+  "/:id",
+  auth(
+    USER_ROLES.ADMIN,
+    USER_ROLES.OWNER,
+    USER_ROLES.STAFF,
+    USER_ROLES.STUDENT
+  ),
+  UserControllers.deleteUser
+);
 
 export const UserRoutes = router;

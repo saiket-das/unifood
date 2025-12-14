@@ -9,7 +9,7 @@ import catchAsync from "../utils/catchAsync";
 import { UserModel } from "../modules/user/user.model";
 
 // Auth middleware factory to enforce roles
-const authMiddleware = (...requireRoles: UserRoleProps[]) => {
+const auth = (...requireRoles: UserRoleProps[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
 
@@ -62,4 +62,4 @@ const authMiddleware = (...requireRoles: UserRoleProps[]) => {
   });
 };
 
-export default authMiddleware;
+export default auth;
