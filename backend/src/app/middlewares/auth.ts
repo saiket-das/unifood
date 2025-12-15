@@ -29,7 +29,7 @@ const auth = (...requireRoles: UserRoleProps[]) => {
       throw new AppError(httpStatus.UNAUTHORIZED, "Invalid or expired token!");
     }
 
-    const { userId, role, iat } = decoded;
+    const { userId, role } = decoded;
 
     // Check if role is allowed
     if (requireRoles.length && !requireRoles.includes(role)) {

@@ -10,7 +10,7 @@ import AppError from "../errors/AppError";
 
 const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Default values
-  let satusCode = 500;
+  let statusCode = 500;
   let errorMessage = "Something went wrong";
   let errorSources: ErrorSourcesProps = [
     {
@@ -22,7 +22,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Handle zod validation error
   if (err instanceof ZodError) {
     const simplifiedZodError = handleZodError(err);
-    satusCode = simplifiedZodError?.statusCode;
+    statusCode = simplifiedZodError.statusCode;
     errorMessage = simplifiedZodError?.message;
     errorSources = simplifiedZodError?.errorSources;
   }
@@ -30,7 +30,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Handle mongoose validation error
   else if (err?.name === "ValidationError") {
     const simplifiedValidationError = handleValidationError(err);
-    satusCode = simplifiedValidationError?.statusCode;
+    statusCode = simplifiedValidationError?.statusCode;
     errorMessage = simplifiedValidationError?.message;
     errorSources = simplifiedValidationError?.errorSources;
   }
@@ -38,7 +38,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Handle mongoose cast error
   else if (err?.name === "CastError") {
     const simplifiedCastError = handleCastError(err);
-    satusCode = simplifiedCastError?.statusCode;
+    statusCode = simplifiedCastError?.statusCode;
     errorMessage = simplifiedCastError?.message;
     errorSources = simplifiedCastError?.errorSources;
   }
@@ -46,14 +46,14 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
   // Handle mongoose 11000 error
   else if (err?.code === 11000) {
     const simplifiedDuplicateError = handleDuplicateError(err);
-    satusCode = simplifiedDuplicateError?.statusCode;
+    statusCode = simplifiedDuplicateError?.statusCode;
     errorMessage = simplifiedDuplicateError?.message;
     errorSources = simplifiedDuplicateError?.errorSources;
   }
 
   // Handle local appError
   else if (err instanceof AppError) {
-    satusCode = err?.statusCode;
+    statusCode = err?.statusCode;
     errorMessage = err?.message;
     errorSources = [{ path: "", message: err?.message }];
   }
@@ -64,7 +64,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     errorSources = [{ path: "", message: err?.message }];
   }
 
-  return res.status(satusCode).json({
+  return res.status(statusCode).json({
     success: false,
     message: errorMessage,
     errorSources: errorSources,
