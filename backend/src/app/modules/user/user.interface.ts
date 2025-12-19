@@ -8,6 +8,7 @@ export interface UserProps {
   role?: (typeof USER_ROLES)[keyof typeof USER_ROLES];
   status?: (typeof USER_STATUS)[keyof typeof USER_STATUS];
   allowedApps?: [string];
+  mustChangePassword?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

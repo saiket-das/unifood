@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import httpStatus from "http-status";
 import { generateToken } from "./auth.utils";
 import { UserModel } from "../../modules/user/user.model";
 import config from "../../config";
@@ -30,6 +31,38 @@ export const loginUserService = async (payload: LoginPayload) => {
   };
 };
 
+// Change password service
+export const changePasswordService = async (
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) => {
+  // Find user with password
+  const user = await UserModel.isUserExists(userId);
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Verify current password
+  const isPasswordMatched = await UserModel.isPasswordMatched(
+    currentPassword,
+    user.password
+  );
+
+  if (!isPasswordMatched) {
+    throw new AppError(httpStatus.UNAUTHORIZED, "Current password is incorrect");
+  }
+
+  // Update password and clear mustChangePassword flag
+  await UserModel.findByIdAndUpdate(userId, {
+    password: await bcrypt.hash(newPassword, 10),
+    mustChangePassword: false,
+  });
+
+  return { message: "Password changed successfully" };
+};
+
 export const AuthServices = {
   loginUserService,
+  changePasswordService,
 };

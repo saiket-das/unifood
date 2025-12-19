@@ -25,6 +25,11 @@ const userSchema = new Schema<UserProps>(
       type: [String],
       default: [],
     },
+
+    mustChangePassword: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

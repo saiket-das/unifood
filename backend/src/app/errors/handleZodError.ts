@@ -9,7 +9,7 @@ const handleZodError = (err: ZodError): GenericErrorResponseProps => {
   const statusCode = httpStatus.BAD_REQUEST;
   const errorSources: ErrorSourcesProps = err.issues.map((issue) => {
     return {
-      path: issue?.path[issue.path.length - 1],
+      path: String(issue?.path[issue.path.length - 1]),
       message: issue?.message,
     };
   });

@@ -6,7 +6,7 @@ import { RestaurantServices } from "./restaurant.services";
 
 const createRestaurant = catchAsync(async (req: Request, res: Response) => {
   const restaurant = await RestaurantServices.createRestaurantService(
-    req.user,
+    req.user!,
     req.body,
     req.file
   );
@@ -34,7 +34,7 @@ const updateRestaurant = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
 
   const result = await RestaurantServices.updateRestaurantService(
-    req.user,
+    req.user!,
     id,
     req.body,
     req.file // 👈 optional
