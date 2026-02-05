@@ -1,0 +1,241 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+  OWNER
+  STAFF
+  ADMIN
+}
+
+enum OrderStatus {
+  PLACED
+  PREPARING
+  READY
+  COMPLETED
+  CANCELLED
+}
+
+enum PricingModel {
+  FIXED
+  MEASURED
+}
+
+enum PaymentMethod {
+  CASH
+  QR
+  ACCOUNT_TRANSFER
+}
+
+enum PaymentStatus {
+  UNPAID
+  PENDING
+  PAID
+}
+
+model User {
+  id             String          @id @default(uuid())
+  email          String          @unique
+  password       String
+  name           String
+  role           UserRole        @default(STUDENT)
+  isActive       Boolean         @default(true)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  
+  studentProfile StudentProfile?
+  restaurant     Restaurant?     // If role is OWNER
+  staffBranch    StaffBranch?    // If role is STAFF
+  orders         Order[]
+  auditLogs      AuditLog[]
+}
+
+model StudentProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hostel    String?
+  favorites Favorite[]
+}
+
+model Restaurant {
+  id        String   @id @default(uuid())
+  name      String
+  ownerId   String   @unique
+  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  branches  Branch[]
+  menuItems MenuItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Branch {
+  id           String   @id @default(uuid())
+  name         String
+  address      String
+  latitude     Float?
+  longitude    Float?
+  hostelTags   String[] // Array of hostel names served
+  openingHours Json?    // Structured opening hours
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  
+  staffMembers   StaffBranch[]
+  branchMenuItems BranchMenuItem[]
+  orders         Order[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model StaffBranch {
+  id       String @id @default(uuid())
+  staffId  String @unique
+  staff    User   @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+  
+  assignedAt DateTime @default(now())
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  menuItems MenuItem[]
+}
+
+model MenuItem {
+  id           String       @id @default(uuid())
+  name         String
+  description  String?
+  imageUrl     String?
+  pricingModel PricingModel @default(FIXED)
+  
+  // For measured items
+  unitPrice    Decimal?     @db.Decimal(10, 2)
+  unitType     String?      // e.g., "g", "scoop", "portion"
+  unitSize     Float?       // e.g., 100
+  
+  // For fixed items
+  price        Decimal?     @db.Decimal(10, 2)
+  
+  restaurantId String
+  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
+  categoryId   String
+  category     Category     @relation(fields: [categoryId], references: [id])
+  
+  branchItems BranchMenuItem[]
+  orderItems  OrderItem[]
+  favorites   Favorite[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BranchMenuItem {
+  id           String   @id @default(uuid())
+  branchId     String
+  branch       Branch   @relation(fields: [branchId], references: [id])
+  menuItemId   String
+  menuItem     MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  isAvailable  Boolean  @default(true)
+  stockLimit   Int?     // Optional stock limit
+  
+  // Overrides (if any)
+  priceOverride      Decimal? @db.Decimal(10, 2)
+  isAvailableOverride Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, menuItemId])
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  studentId  String
+  student    StudentProfile @relation(fields: [studentId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Order {
+  id            String      @id @default(uuid())
+  orderNumber   String      @unique // Human readable short id
+  status        OrderStatus @default(PLACED)
+  
+  studentId     String
+  student       User        @relation(fields: [studentId], references: [id])
+  
+  branchId      String
+  branch        Branch      @relation(fields: [branchId], references: [id])
+  
+  totalPrice    Decimal     @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  paymentStatus PaymentStatus @default(UNPAID)
+  
+  items         OrderItem[]
+  statusEvents  OrderStatusEvent[]
+  paymentProofs PaymentProof[]
+  
+  cancelReason  String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  
+  quantity      Float   @default(1) // Can be float for measured items if needed, but usually 1 order item = 1 menu item entry
+  unitPrice     Decimal @db.Decimal(10, 2)
+  subtotal      Decimal @db.Decimal(10, 2)
+  
+  // For measured items, staff will update this
+  finalQuantity Float?
+  isMeasured    Boolean @default(false)
+}
+
+model OrderStatusEvent {
+  id        String      @id @default(uuid())
+  orderId   String
+  order     Order       @relation(fields: [orderId], references: [id])
+  status    OrderStatus
+  note      String?
+  staffId   String?     // Who changed the status
+  createdAt DateTime    @default(now())
+}
+
+model PaymentProof {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  imageUrl  String
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  details   Json?
+  createdAt DateTime @default(now())
+}
