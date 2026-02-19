@@ -42,3 +42,4 @@ lerna-debug.log*
 
 # prisma
 /prisma/migrations
+/generated/prisma

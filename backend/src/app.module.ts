@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -15,6 +16,7 @@ import { RealtimeModule } from './modules/realtime/realtime.module';
 import { CommonModule } from './common/common.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { PasswordChangeGuard } from './common/guards/password-change.guard';
 
 @Module({
   imports: [
@@ -39,6 +41,12 @@ import { AppService } from './app.service';
     RealtimeModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: PasswordChangeGuard,
+    },
+  ],
 })
 export class AppModule {}

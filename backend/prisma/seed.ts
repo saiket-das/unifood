@@ -157,20 +157,12 @@ async function main() {
   // 8. Create Student
   const student = await prisma.user.upsert({
     where: { email: 'student@um.edu.my' },
-    update: {},
+    update: { hostel: 'KK1' },
     create: {
       email: 'student@um.edu.my',
       password: hashedPassword,
       name: 'Ali Student',
       role: UserRole.STUDENT,
-    },
-  });
-
-  await prisma.studentProfile.upsert({
-    where: { userId: student.id },
-    update: { hostel: 'KK1' },
-    create: {
-      userId: student.id,
       hostel: 'KK1',
     },
   });

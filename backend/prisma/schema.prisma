@@ -49,23 +49,19 @@ model User {
   name           String
   role           UserRole        @default(STUDENT)
   isActive       Boolean         @default(true)
+  needsPasswordChange Boolean     @default(false)
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   
-  studentProfile StudentProfile?
+  hostel         String?         // Metadata for students
+  
   restaurant     Restaurant?     // If role is OWNER
   staffBranch    StaffBranch?    // If role is STAFF
   orders         Order[]
-  auditLogs      AuditLog[]
+  favorites      Favorite[]
 }
 
-model StudentProfile {
-  id        String   @id @default(uuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  hostel    String?
-  favorites Favorite[]
-}
+
 
 model Restaurant {
   id        String   @id @default(uuid())
@@ -92,8 +88,30 @@ model Branch {
   staffMembers   StaffBranch[]
   branchMenuItems BranchMenuItem[]
   orders         Order[]
+  paymentOptions BranchPaymentOption[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model BranchPaymentOption {
+  id                String        @id @default(uuid())
+  branchId          String
+  branch            Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  method            PaymentMethod
+  isEnabled         Boolean       @default(true)
+  
+  // QR configuration
+  qrCodeImageUrl    String?
+  
+  // Account Transfer configuration
+  bankName          String?
+  accountNumber     String?
+  accountHolderName String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, method])
 }
 
 model StaffBranch {
@@ -162,13 +180,16 @@ model BranchMenuItem {
 
 model Favorite {
   id         String   @id @default(uuid())
-  studentId  String
-  student    StudentProfile @relation(fields: [studentId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
+
+  @@unique([userId, menuItemId])
 }
+
 
 model Order {
   id            String      @id @default(uuid())
@@ -229,13 +250,4 @@ model PaymentProof {
   createdAt DateTime @default(now())
 }
 
-model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  action    String
-  entity    String
-  entityId  String
-  details   Json?
-  createdAt DateTime @default(now())
-}
+
