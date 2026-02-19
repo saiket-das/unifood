@@ -12,9 +12,11 @@ export const metadata: Metadata = {
   title: "Unifood Merchant",
   description: "Unifood Merchant Dashboard",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/tab-icon.svg",
   },
 };
+
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export default function RootLayout({
   children,
@@ -26,7 +28,9 @@ export default function RootLayout({
       <body
         className={`${lora.variable} antialiased`}
       >
-        {children}
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
       </body>
     </html>
   );
