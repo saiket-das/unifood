@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export default function RootLayout({
   children,
@@ -28,9 +29,16 @@ export default function RootLayout({
       <body
         className={`${lora.variable} antialiased`}
       >
-        <TooltipProvider>
-          {children}
-        </TooltipProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <TooltipProvider>
+            {children}
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

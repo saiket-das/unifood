@@ -1,13 +1,18 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+
 import {
   BadgeCheck,
-  Bell,
   ChevronsUpDown,
-  CreditCard,
+  Laptop,
   LogOut,
+  Moon,
   Sparkles,
+  Sun,
 } from "lucide-react"
+
+import { useTheme } from "next-themes"
 
 import {
   Avatar,
@@ -40,6 +45,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const { theme, setTheme } = useTheme()
 
   return (
     <SidebarMenu>
@@ -79,26 +85,37 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
+            {/* <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <Sparkles />
                 Upgrade to Pro
               </DropdownMenuItem>
-            </DropdownMenuGroup>
+            </DropdownMenuGroup> */}
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Appearance
+              </DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => setTheme("light")} className={cn(theme === "light" && "bg-accent text-accent-foreground")}>
+                <Sun className="h-4 w-4" />
+                Light
+                {theme === "light" && <div className="ml-auto h-2 w-2 rounded-full bg-primary" />}
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Bell />
-                Notifications
+              <DropdownMenuItem onClick={() => setTheme("dark")} className={cn(theme === "dark" && "bg-accent text-accent-foreground")}>
+                <Moon className="h-4 w-4" />
+                Dark
+                {theme === "dark" && <div className="ml-auto h-2 w-2 rounded-full bg-primary" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("system")} className={cn(theme === "system" && "bg-accent text-accent-foreground")}>
+                <Laptop className="h-4 w-4" />
+                System
+                {theme === "system" && <div className="ml-auto h-2 w-2 rounded-full bg-primary" />}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
