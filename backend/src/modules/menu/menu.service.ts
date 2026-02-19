@@ -29,6 +29,19 @@ export class MenuService {
     });
   }
 
+  async searchMenuItems(query: string) {
+    return this.prisma.menuItem.findMany({
+      where: {
+        name: {
+          contains: query,
+          mode: 'insensitive',
+        },
+      },
+      include: { category: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
   async setBranchAvailability(staffOrOwnerId: string, branchId: string, menuItemId: string, isAvailable: boolean) {
     // Check perm (Owner or Staff assigned to this branch)
     const canManage = await this.checkBranchPermission(staffOrOwnerId, branchId);

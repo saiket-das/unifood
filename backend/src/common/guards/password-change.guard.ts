@@ -1,5 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
 export class PasswordChangeGuard implements CanActivate {
@@ -13,17 +14,22 @@ export class PasswordChangeGuard implements CanActivate {
 
     if (isPublic) return true;
 
+    // GraphQL context — skip HTTP-specific guard logic
+    if (context.getType<string>() === 'graphql') {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const user = request.user;
 
     // Check if user is authenticated and needs to change password
     if (user && user.needsPasswordChange) {
       // Allow only the "change-password" endpoint
-      const routePath = request.route.path;
-      if (routePath.includes('/auth/change-password')) {
+      const routePath = request.route?.path;
+      if (routePath && routePath.includes('/auth/change-password')) {
         return true;
       }
-      
+
       throw new ForbiddenException('You must change your password before accessing this resource');
     }
 
