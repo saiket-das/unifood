@@ -18,7 +18,13 @@ export class RestaurantsService {
     const restaurant = await this.prisma.restaurant.findUnique({
       where: { ownerId },
       include: {
-        branches: true,
+        branches: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+          },
+        },
       },
     });
 

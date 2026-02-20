@@ -7,13 +7,9 @@ import { logoutUser } from "@/app/actions/auth"
 import {
   BadgeCheck,
   ChevronsUpDown,
-  Laptop,
   LogOut,
-  Moon,
   Sparkles,
-  Sun,
 } from "lucide-react"
-import { useTheme } from "next-themes"
 
 import {
   Avatar,
@@ -46,7 +42,6 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const { theme, setTheme } = useTheme()
   const router = useRouter()
 
   const handleLogout = async () => {
@@ -104,25 +99,6 @@ export function NavUser({
               <DropdownMenuItem>
                 <BadgeCheck />
                 Account
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="px-2 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Appearance
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => setTheme("light")} className={cn(theme === "light" && "bg-accent text-accent-foreground")}>
-                <Sun className="h-4 w-4" />
-                Light
-                {theme === "light" && <div className="ml-auto h-2 w-2 rounded-full bg-primary" />}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")} className={cn(theme === "dark" && "bg-accent text-accent-foreground")}>
-                <Moon className="h-4 w-4" />
-                Dark
-                {theme === "dark" && <div className="ml-auto h-2 w-2 rounded-full bg-primary" />}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")} className={cn(theme === "system" && "bg-accent text-accent-foreground")}>
-                <Laptop className="h-4 w-4" />
-                System
-                {theme === "system" && <div className="ml-auto h-2 w-2 rounded-full bg-primary" />}
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

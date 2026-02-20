@@ -1,7 +1,7 @@
 export default function MenuPage() {
   return (
     <>
-      <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">Menu Management</h1>
         <p className="text-sm text-muted-foreground">Manage your restaurant menu items, categories, and pricing.</p>
       </div>

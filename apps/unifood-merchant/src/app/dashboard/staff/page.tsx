@@ -1,7 +1,7 @@
 export default function StaffPage() {
   return (
     <>
-      <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">Staff Management</h1>
         <p className="text-sm text-muted-foreground">Invite, manage, and assign roles to your restaurant staff.</p>
       </div>

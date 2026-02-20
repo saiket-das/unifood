@@ -1,7 +1,7 @@
 export default function MenuAvailabilityPage() {
   return (
     <>
-      <div className="flex flex-col gap-2 mb-4">
+      <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-bold tracking-tight">Menu Availability</h1>
         <p className="text-sm text-muted-foreground">Manage real-time availability of your menu items and categories.</p>
       </div>

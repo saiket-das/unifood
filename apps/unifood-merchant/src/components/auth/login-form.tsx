@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import Image from "next/image"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -161,9 +162,9 @@ export function LoginForm({
                 </Button>
                 <div className="text-center text-sm text-slate-500">
                   Don&apos;t have an account?{" "}
-                  <a href={APP_ROUTES.SIGNUP} className="font-semibold text-[#006292] hover:underline underline-offset-4">
+                  <Link href={APP_ROUTES.SIGNUP} className="font-semibold text-[#006292] hover:underline underline-offset-4">
                     Sign up
-                  </a>
+                  </Link>
                 </div>
               </Field>
             </FieldGroup>

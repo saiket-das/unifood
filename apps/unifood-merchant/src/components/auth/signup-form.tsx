@@ -1,4 +1,5 @@
 import Image from "next/image"
+import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -76,9 +77,9 @@ export function SignupForm({
                 </Button>
                 <div className="text-center text-sm text-slate-500">
                   Already have an account?{" "}
-                  <a href={APP_ROUTES.LOGIN} className="font-semibold text-[#006292] hover:underline underline-offset-4">
+                  <Link href={APP_ROUTES.LOGIN} className="font-semibold text-[#006292] hover:underline underline-offset-4">
                     Login
-                  </a>
+                  </Link>
                 </div>
               </Field>
             </FieldGroup>

@@ -25,68 +25,64 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-// This would typically come from an auth hook/context
-const sampleData = {
-  user: {
-    name: "John Owner",
-    email: "owner@unifood.com",
-    avatar: "/avatars/john.jpg",
-    role: "owner" as "owner" | "staff",
-  },
-  branches: [
-    {
-      name: "Unifood Main",
-      // logo: Command,
-      plan: "Enterprise",
-    },
-    {
-      name: "Unifood North",
-      // logo: Command,
-      plan: "Startup",
-    },
-    {
-      name: "Unifood South",
-      // logo: Command,
-      plan: "Free",
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Notifications",
-      url: SECONDARY_ROUTES.NOTIFICATIONS,
-      icon: Bell,
-    },
-    {
-      title: "Settings",
-      url: SECONDARY_ROUTES.SETTINGS,
-      icon: Settings,
-    },
-    {
-      title: "Get Help",
-      url: SECONDARY_ROUTES.HELP,
-      icon: HelpCircle,
-    },
-    {
-      title: "Search",
-      url: SECONDARY_ROUTES.SEARCH,
-      icon: Search,
-    },
-  ],
+export interface SidebarBranch {
+  id: string;
+  name: string;
+  address: string;
 }
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  // Mock role-based logic. In a real app, this would be reactive.
-  const user = sampleData.user
-  
+export interface SidebarUser {
+  name: string;
+  email: string;
+  avatar: string;
+  role: "OWNER" | "STAFF";
+}
+
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user: SidebarUser;
+  branches?: SidebarBranch[];
+}
+
+const secondaryRoutes = [
+  {
+    title: "Notifications",
+    url: SECONDARY_ROUTES.NOTIFICATIONS,
+    icon: Bell,
+  },
+  {
+    title: "Settings",
+    url: SECONDARY_ROUTES.SETTINGS,
+    icon: Settings,
+  },
+  {
+    title: "Get Help",
+    url: SECONDARY_ROUTES.HELP,
+    icon: HelpCircle,
+  },
+  {
+    title: "Search",
+    url: SECONDARY_ROUTES.SEARCH,
+    icon: Search,
+  },
+];
+
+export function AppSidebar({ user, branches = [], ...props }: AppSidebarProps) {
   const navMainItems = React.useMemo(() => {
-    return user.role === "owner" ? OWNER_ROUTES : STAFF_ROUTES
+    return user.role === "OWNER" ? OWNER_ROUTES : STAFF_ROUTES
   }, [user.role])
+
+  const formattedBranches = React.useMemo(() => {
+    return branches.map(b => ({
+      name: b.name,
+      plan: b.address // Using address instead of plan as requested
+    }))
+  }, [branches])
 
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {user.role === "owner" ? (
-          <BranchSwitcher branches={sampleData.branches} />
+        {user.role === "OWNER" ? (
+          <BranchSwitcher branches={formattedBranches} />
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
@@ -111,7 +107,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMainItems} />
-        <NavSecondary items={sampleData.navSecondary} className="mt-auto" />
+        <NavSecondary items={secondaryRoutes} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />
