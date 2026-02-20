@@ -2,21 +2,15 @@
 
 import * as React from "react"
 import {
-  LayoutDashboard,
-  PlusCircle,
-  ShoppingBag,
-  UtensilsCrossed,
-  Users,
-  Utensils,
   Settings,
   HelpCircle,
   Search,
-  Command,
   Bell,
+  Command,
 } from "lucide-react"
 
 import Image from "next/image"
-import { OWNER_ROUTES, STAFF_ROUTES } from "@/lib/routes"
+import { OWNER_ROUTES, STAFF_ROUTES, SECONDARY_ROUTES } from "@/lib/routes"
 import { NavMain } from "./nav-main"
 import { NavSecondary } from "./nav-secondary"
 import { NavUser } from "./nav-user"
@@ -59,22 +53,22 @@ const sampleData = {
   navSecondary: [
     {
       title: "Notifications",
-      url: "#",
+      url: SECONDARY_ROUTES.NOTIFICATIONS,
       icon: Bell,
     },
     {
       title: "Settings",
-      url: "#",
+      url: SECONDARY_ROUTES.SETTINGS,
       icon: Settings,
     },
     {
       title: "Get Help",
-      url: "#",
+      url: SECONDARY_ROUTES.HELP,
       icon: HelpCircle,
     },
     {
       title: "Search",
-      url: "#",
+      url: SECONDARY_ROUTES.SEARCH,
       icon: Search,
     },
   ],

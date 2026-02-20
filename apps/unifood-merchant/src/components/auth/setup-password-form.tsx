@@ -23,54 +23,54 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { loginUser } from "@/app/actions/auth"
+import { changePassword } from "@/app/actions/auth"
 import { APP_ROUTES } from "@/lib/routes"
 
-const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(1, { message: "Password is required" }),
+const passwordSchema = z.object({
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
+  confirmPassword: z.string().min(6, { message: "Please confirm your password" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+type SetupPasswordValues = z.infer<typeof passwordSchema>
 
-export function LoginForm({
+export function SetupPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
-  const [authError, setAuthError] = React.useState<string | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+  } = useForm<SetupPasswordValues>({
+    resolver: zodResolver(passwordSchema),
     defaultValues: {
-      email: "",
       password: "",
+      confirmPassword: "",
     },
   })
 
-  const onSubmit = (data: LoginFormValues) => {
-    setAuthError(null)
+  const onSubmit = (data: SetupPasswordValues) => {
+    setError(null)
     startTransition(async () => {
       const formData = new FormData()
-      formData.append("email", data.email)
       formData.append("password", data.password)
 
-      const result = await loginUser(null, formData)
+      const result = await changePassword(null, formData)
 
-      console.log(result);
       if (result.error) {
-        setAuthError(result.error)
+        setError(result.error)
         return
       }
 
-      if (result.needsPasswordChange) {
-        router.push(`${APP_ROUTES.SETUP_PASSWORD}?email=${encodeURIComponent(data.email)}`)
-      } else if (result.success) {
+      if (result.success) {
+        // Password changed successfully, rediect to dashboard
         router.push(APP_ROUTES.DASHBOARD)
       }
     })
@@ -90,41 +90,18 @@ export function LoginForm({
               height={40}
             />
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight text-[#001b29] font-heading">
-            unifood
+          <CardTitle className="text-2xl font-bold tracking-tight text-[#001b29] font-heading">
+            Setup Password
           </CardTitle>
-          <CardDescription className="text-sm font-medium text-slate-500">
-            Welcome back! Please login to your account.
+          <CardDescription className="text-sm font-medium text-slate-500 max-w-xs text-center">
+            You are using a temporary password. Please set a new password to continue to the dashboard.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup className="gap-3">
               <Field className="gap-1.5">
-                <FieldLabel htmlFor="email">Email</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  {...register("email")}
-                  aria-invalid={!!errors.email}
-                />
-                {errors.email && (
-                  <p className="text-sm font-medium text-destructive">
-                    {errors.email.message}
-                  </p>
-                )}
-              </Field>
-              <Field className="gap-1.5">
-                <div className="flex items-center">
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <a
-                    href="#"
-                    className="ml-auto text-sm font-medium text-[#006292] hover:underline underline-offset-4"
-                  >
-                    Forgot your password?
-                  </a>
-                </div>
+                <FieldLabel htmlFor="password">New Password</FieldLabel>
                 <Input
                   id="password"
                   type="password"
@@ -137,10 +114,25 @@ export function LoginForm({
                   </p>
                 )}
               </Field>
+              
+              <Field className="gap-1.5">
+                <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...register("confirmPassword")}
+                  aria-invalid={!!errors.confirmPassword}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-sm font-medium text-destructive">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
+              </Field>
 
-              {authError && (
+              {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm font-medium">
-                  {authError}
+                  {error}
                 </div>
               )}
 
@@ -153,18 +145,12 @@ export function LoginForm({
                   {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logging in...
+                      Updating...
                     </>
                   ) : (
-                    "Login"
+                    "Continue to Dashboard"
                   )}
                 </Button>
-                <div className="text-center text-sm text-slate-500">
-                  Don&apos;t have an account?{" "}
-                  <a href={APP_ROUTES.SIGNUP} className="font-semibold text-[#006292] hover:underline underline-offset-4">
-                    Sign up
-                  </a>
-                </div>
               </Field>
             </FieldGroup>
           </form>

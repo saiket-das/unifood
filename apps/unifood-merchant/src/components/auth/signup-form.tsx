@@ -14,6 +14,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { APP_ROUTES } from "@/lib/routes"
 
 export function SignupForm({
   className,
@@ -75,7 +76,7 @@ export function SignupForm({
                 </Button>
                 <div className="text-center text-sm text-slate-500">
                   Already have an account?{" "}
-                  <a href="/login" className="font-semibold text-[#006292] hover:underline underline-offset-4">
+                  <a href={APP_ROUTES.LOGIN} className="font-semibold text-[#006292] hover:underline underline-offset-4">
                     Login
                   </a>
                 </div>

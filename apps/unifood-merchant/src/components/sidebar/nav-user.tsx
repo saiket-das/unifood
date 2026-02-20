@@ -1,6 +1,8 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
+import { logoutUser } from "@/app/actions/auth"
 
 import {
   BadgeCheck,
@@ -11,7 +13,6 @@ import {
   Sparkles,
   Sun,
 } from "lucide-react"
-
 import { useTheme } from "next-themes"
 
 import {
@@ -46,6 +47,12 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar()
   const { theme, setTheme } = useTheme()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    await logoutUser()
+    router.push("/login")
+  }
 
   return (
     <SidebarMenu>
@@ -119,7 +126,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out
             </DropdownMenuItem>

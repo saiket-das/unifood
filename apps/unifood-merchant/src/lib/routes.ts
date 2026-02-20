@@ -23,22 +23,22 @@ export const OWNER_ROUTES: RouteItem[] = [
   },
   {
     title: "Menu",
-    url: "/menu",
+    url: "/dashboard/menu",
     icon: Utensils,
   },
   {
     title: "Orders",
-    url: "/orders",
+    url: "/dashboard/orders",
     icon: ShoppingBag,
   },
   {
     title: "Manual Orders",
-    url: "/manual-orders",
+    url: "/dashboard/manual-orders",
     icon: UtensilsCrossed,
   },
   {
     title: "Staff",
-    url: "/staff",
+    url: "/dashboard/staff",
     icon: Users,
   },
 ]
@@ -46,20 +46,35 @@ export const OWNER_ROUTES: RouteItem[] = [
 export const STAFF_ROUTES: RouteItem[] = [
   {
     title: "Menu",
-    url: "/menu",
+    url: "/dashboard/menu",
     icon: Utensils,
     items: [
-      { title: "Availability", url: "/menu/availability" }
+      { title: "Availability", url: "/dashboard/menu/availability" }
     ]
   },
   {
     title: "Orders",
-    url: "/orders",
+    url: "/dashboard/orders",
     icon: ShoppingBag,
   },
   {
     title: "Manual Orders",
-    url: "/manual-orders",
+    url: "/dashboard/manual-orders",
     icon: UtensilsCrossed,
   },
 ]
+
+export const APP_ROUTES = {
+  HOME: "/",
+  DASHBOARD: "/dashboard",
+  LOGIN: "/login",
+  SIGNUP: "/signup",
+  SETUP_PASSWORD: "/login/setup-password",
+}
+
+export const SECONDARY_ROUTES = {
+  NOTIFICATIONS: "/dashboard/notifications",
+  SETTINGS: "/dashboard/settings",
+  HELP: "/dashboard/help",
+  SEARCH: "/dashboard/search",
+}
