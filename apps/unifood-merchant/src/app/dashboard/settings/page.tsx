@@ -1,7 +1,7 @@
 export default function SettingsPage() {
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
         <p className="text-sm text-muted-foreground">Configure your restaurant profile, preferences, and account settings.</p>
       </div>

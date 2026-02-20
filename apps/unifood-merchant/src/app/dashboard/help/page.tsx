@@ -1,7 +1,7 @@
 export default function HelpPage() {
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">Help & Support</h1>
         <p className="text-sm text-muted-foreground">Find answers, tutorials, and contact information for merchant support.</p>
       </div>

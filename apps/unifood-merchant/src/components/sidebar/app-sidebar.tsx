@@ -35,7 +35,7 @@ export interface SidebarUser {
   name: string;
   email: string;
   avatar: string;
-  role: "OWNER" | "STAFF";
+  role: "OWNER" | "STAFF" | "STUDENT";
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -74,7 +74,7 @@ export function AppSidebar({ user, branches = [], ...props }: AppSidebarProps) {
   const formattedBranches = React.useMemo(() => {
     return branches.map(b => ({
       name: b.name,
-      plan: b.address // Using address instead of plan as requested
+      plan: b.address
     }))
   }, [branches])
 

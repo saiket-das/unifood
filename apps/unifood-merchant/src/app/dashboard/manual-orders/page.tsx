@@ -1,7 +1,7 @@
 export default function ManualOrdersPage() {
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">Manual Orders</h1>
         <p className="text-sm text-muted-foreground">Quickly create and process orders manually for walk-in customers.</p>
       </div>

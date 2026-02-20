@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -40,7 +41,6 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const router = useRouter()
   const [isPending, startTransition] = React.useTransition()
-  const [authError, setAuthError] = React.useState<string | null>(null)
 
   const {
     register,
@@ -55,7 +55,6 @@ export function LoginForm({
   })
 
   const onSubmit = (data: LoginFormValues) => {
-    setAuthError(null)
     startTransition(async () => {
       const formData = new FormData()
       formData.append("email", data.email)
@@ -63,9 +62,10 @@ export function LoginForm({
 
       const result = await loginUser(null, formData)
 
-      console.log(result);
       if (result.error) {
-        setAuthError(result.error)
+        toast.error("Authentication failed", {
+          description: result.error,
+        })
         return
       }
 
@@ -79,29 +79,31 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="shadow-2xl border-white/10 pt-8 overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#006292] to-transparent opacity-50" />
-        <CardHeader className="text-center flex flex-col items-center gap-4 pb-2">
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-blue-50 relative group">
-            <div className="absolute inset-0 bg-blue-50/50 rounded-lg scale-0 group-hover:scale-110 transition-transform duration-500 -z-10" />
-            <Image
-              src="/logo-navy.svg"
-              alt="Unifood Logo"
-              width={40}
-              height={40}
-            />
+      <Card className="overflow-hidden p-0 border-white/10 shadow-2xl">
+        <CardContent className="grid p-0 md:grid-cols-2">
+          <div className="bg-[#006292] relative hidden md:flex items-center justify-center p-12">
+            <div className="relative z-10">
+              <Image
+                src="/icon.svg"
+                alt="Unifood Logo"
+                width={120}
+                height={120}
+                className="drop-shadow-sm"
+              />
+            </div>
           </div>
-          <CardTitle className="text-3xl font-bold tracking-tight text-[#001b29] font-heading">
-            unifood
-          </CardTitle>
-          <CardDescription className="text-sm font-medium text-slate-500">
-            Welcome back! Please login to your account.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <FieldGroup className="gap-3">
-              <Field className="gap-1.5">
+
+          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
+            <FieldGroup>
+              <div className="flex flex-col items-center gap-2 text-center mb-6">
+                <h1 className="text-2xl font-bold tracking-tight text-[#001b29]">
+                  Welcome back
+                </h1>
+                <p className="text-muted-foreground text-balance text-sm font-medium">
+                  Login to your Unifood account
+                </p>
+              </div>
+              <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
@@ -111,12 +113,12 @@ export function LoginForm({
                   aria-invalid={!!errors.email}
                 />
                 {errors.email && (
-                  <p className="text-sm font-medium text-destructive">
+                  <p className="text-sm font-medium text-destructive mt-1">
                     {errors.email.message}
                   </p>
                 )}
               </Field>
-              <Field className="gap-1.5">
+              <Field>
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <a
@@ -133,19 +135,14 @@ export function LoginForm({
                   aria-invalid={!!errors.password}
                 />
                 {errors.password && (
-                  <p className="text-sm font-medium text-destructive">
+                  <p className="text-sm font-medium text-destructive mt-1">
                     {errors.password.message}
                   </p>
                 )}
               </Field>
 
-              {authError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm font-medium">
-                  {authError}
-                </div>
-              )}
 
-              <Field className="gap-2 pt-2">
+              <Field className="pt-2">
                 <Button
                   type="submit"
                   disabled={isPending}
@@ -160,17 +157,24 @@ export function LoginForm({
                     "Login"
                   )}
                 </Button>
-                <div className="text-center text-sm text-slate-500">
-                  Don&apos;t have an account?{" "}
-                  <Link href={APP_ROUTES.SIGNUP} className="font-semibold text-[#006292] hover:underline underline-offset-4">
-                    Sign up
-                  </Link>
-                </div>
               </Field>
+              
+              <div className="text-center text-sm text-slate-500 mt-4">
+                Don&apos;t have an account?{" "}
+                <Link href={APP_ROUTES.SIGNUP} className="font-semibold text-[#006292] hover:underline underline-offset-4">
+                  Sign up
+                </Link>
+              </div>
             </FieldGroup>
           </form>
         </CardContent>
       </Card>
+      <div className="px-6 text-center text-xs text-slate-500">
+        By clicking login, you agree to our{" "}
+        <a href="#" className="underline underline-offset-4 hover:text-[#006292]">Terms of Service</a>{" "}
+        and{" "}
+        <a href="#" className="underline underline-offset-4 hover:text-[#006292]">Privacy Policy</a>.
+      </div>
     </div>
   )
 }

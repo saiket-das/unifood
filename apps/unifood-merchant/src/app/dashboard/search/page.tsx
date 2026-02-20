@@ -1,7 +1,7 @@
 export default function SearchPage() {
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">Search</h1>
         <p className="text-sm text-muted-foreground">Quickly find orders, menu items, or staff members across your restaurant.</p>
       </div>

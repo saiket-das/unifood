@@ -23,13 +23,15 @@ export async function middleware(request: NextRequest) {
       
       const needsPasswordChange = payload.needsPasswordChange as boolean
 
+      const role = payload.role as string
+      
+      if (role === 'STUDENT') {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+
       if (needsPasswordChange && !pathname.startsWith('/login/setup-password')) {
         return NextResponse.redirect(new URL('/login/setup-password', request.url))
       }
-      
-      // Additional Role-based checks could be done here if needed
-      // (e.g., /admin only for OWNER)
-
     } catch (err) {
       // Invalid token
       return NextResponse.redirect(new URL('/login', request.url))

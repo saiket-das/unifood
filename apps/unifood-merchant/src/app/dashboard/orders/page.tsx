@@ -1,7 +1,7 @@
 export default function OrdersPage() {
   return (
     <>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-bold tracking-tight">Order History</h1>
         <p className="text-sm text-muted-foreground">View and manage all your restaurant&apos;s past and current orders.</p>
       </div>

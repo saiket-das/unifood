@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { apiClient } from "@/lib/api-client";
+import { decodeJwt } from "jose";
 
 export async function loginUser(prevState: any, formData: FormData) {
   const email = formData.get("email");
@@ -15,6 +16,16 @@ export async function loginUser(prevState: any, formData: FormData) {
     }
 
     const tokens = res.data;
+    
+    // Role-based access check for merchant app
+    const { role } = decodeJwt(tokens.access_token) as { role: string };
+    
+    if (role === "STUDENT") {
+      return { 
+        error: "This account does not have merchant access.", 
+        needsPasswordChange: false 
+      };
+    }
 
     // Set cookie
     const cookieStore = await cookies();

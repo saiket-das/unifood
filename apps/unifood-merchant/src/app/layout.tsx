@@ -16,6 +16,7 @@ export const metadata: Metadata = {
   },
 };
 
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
           <TooltipProvider>
             {children}
           </TooltipProvider>
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>

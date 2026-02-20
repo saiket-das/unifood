@@ -21,6 +21,17 @@ export default async function DashboardLayout({
   }
 
   const user = profileRes.data
+
+  if (user.role === "STUDENT") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
+        <h1 className="text-2xl font-bold text-red-600 mb-2">Access Denied</h1>
+        <p className="text-muted-foreground">This account does not have merchant access.</p>
+        <a href="/login" className="mt-4 text-[#006292] hover:underline">Back to Login</a>
+      </div>
+    )
+  }
+
   let branches: SidebarBranch[] = []
 
   // If owner, fetch restaurant/branches
