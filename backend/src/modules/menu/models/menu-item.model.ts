@@ -38,8 +38,8 @@ export class MenuItemType {
   @Field(() => Float, { nullable: true })
   unitSize?: number;
 
-  @Field(() => CategoryType, { nullable: true })
-  category?: CategoryType;
+  @Field(() => [CategoryType], { nullable: true })
+  categories?: CategoryType[];
 
   @Field()
   restaurantId: string;

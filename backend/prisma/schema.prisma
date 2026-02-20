@@ -127,7 +127,7 @@ model StaffBranch {
 model Category {
   id        String     @id @default(uuid())
   name      String     @unique
-  menuItems MenuItem[]
+  menuItems MenuItem[] @relation("MenuItemCategories")
 }
 
 model MenuItem {
@@ -147,8 +147,7 @@ model MenuItem {
   
   restaurantId String
   restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
-  categoryId   String
-  category     Category     @relation(fields: [categoryId], references: [id])
+  categories   Category[]   @relation("MenuItemCategories")
   
   branchItems BranchMenuItem[]
   orderItems  OrderItem[]
@@ -163,7 +162,7 @@ model BranchMenuItem {
   branchId     String
   branch       Branch   @relation(fields: [branchId], references: [id])
   menuItemId   String
-  menuItem     MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem     MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   
   isAvailable  Boolean  @default(true)
   stockLimit   Int?     // Optional stock limit
@@ -221,7 +220,7 @@ model OrderItem {
   orderId    String
   order      Order    @relation(fields: [orderId], references: [id])
   menuItemId String
-  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
   
   quantity      Float   @default(1) // Can be float for measured items if needed, but usually 1 order item = 1 menu item entry
   unitPrice     Decimal @db.Decimal(10, 2)

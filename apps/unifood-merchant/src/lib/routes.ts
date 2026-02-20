@@ -11,7 +11,6 @@ export type RouteItem = {
   url: string
   icon: any
   isActive?: boolean
-  items?: { title: string; url: string }[]
 }
 
 export const OWNER_ROUTES: RouteItem[] = [
@@ -19,7 +18,6 @@ export const OWNER_ROUTES: RouteItem[] = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
-    isActive: true,
   },
   {
     title: "Menu",
@@ -48,9 +46,6 @@ export const STAFF_ROUTES: RouteItem[] = [
     title: "Menu",
     url: "/dashboard/menu",
     icon: Utensils,
-    items: [
-      { title: "Availability", url: "/dashboard/menu/availability" }
-    ]
   },
   {
     title: "Orders",

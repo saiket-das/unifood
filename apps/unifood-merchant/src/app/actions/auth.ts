@@ -79,6 +79,28 @@ export async function changePassword(prevState: any, formData: FormData) {
       return { error: res.error || "Failed to change password." };
     }
 
+    const tokens = res.data;
+
+    // Set new cookies after password change to update the JWT (clear needsPasswordChange)
+    const cookieStore = await cookies();
+    cookieStore.set("auth_token", tokens.access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 15,
+    });
+
+    if (tokens.refresh_token) {
+      cookieStore.set("refresh_token", tokens.refresh_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+      });
+    }
+
     // Return success so the client can redirect
     return { error: null, success: true };
   } catch (error) {

@@ -11,6 +11,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 
+import Link from "next/link"
+
 export function DynamicBreadcrumbs() {
   const pathname = usePathname()
   
@@ -51,9 +53,9 @@ export function DynamicBreadcrumbs() {
                 {isLast ? (
                   <BreadcrumbPage>{title}</BreadcrumbPage>
                 ) : (
-                  <>
-                    <BreadcrumbLink href={href}>{title}</BreadcrumbLink>
-                  </>
+                  <BreadcrumbLink asChild>
+                    <Link href={href}>{title}</Link>
+                  </BreadcrumbLink>
                 )}
               </BreadcrumbItem>
               {!isLast && <BreadcrumbSeparator className="hidden md:block" />}

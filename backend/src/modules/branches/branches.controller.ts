@@ -116,4 +116,22 @@ export class BranchesController {
       data: {},
     });
   }
+
+  @Patch(':branchId/staff/:staffId/status')
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'Toggle staff active status' })
+  async toggleStaffStatus(
+    @Param('branchId') branchId: string,
+    @Param('staffId') staffId: string,
+    @Req() req: any,
+    @Res() res: Response
+  ) {
+    const user = await this.branchesService.toggleStaffStatus(req.user.sub, branchId, staffId);
+    sendResponse(res, {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: `Staff member ${user.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: user,
+    });
+  }
 }

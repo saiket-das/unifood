@@ -197,5 +197,29 @@ export class BranchesService {
       where: { staffId },
     });
   }
+
+  async toggleStaffStatus(ownerId: string, branchId: string, staffId: string) {
+    const branch = await this.prisma.branch.findUnique({
+      where: { id: branchId },
+      include: { restaurant: true },
+    });
+
+    if (!branch || branch.restaurant.ownerId !== ownerId) {
+      throw new ForbiddenException('You do not own this branch');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: staffId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Staff member not found');
+    }
+
+    return this.prisma.user.update({
+      where: { id: staffId },
+      data: { isActive: !user.isActive },
+    });
+  }
 }
 

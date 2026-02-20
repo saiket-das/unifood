@@ -58,7 +58,7 @@ export class AuthService {
   async changePassword(userId: string, dto: ChangePasswordDto) {
     const hashedPassword = await argon2.hash(dto.newPassword);
 
-    await this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { id: userId },
       data: {
         password: hashedPassword,
@@ -66,7 +66,7 @@ export class AuthService {
       },
     });
 
-    return { success: true, message: 'Password updated successfully' };
+    return this.getTokens(user.id, user.email, user.role, false);
   }
 
   async getTokens(userId: string, email: string, role: string, needsPasswordChange: boolean = false) {

@@ -46,7 +46,7 @@ export class AuthController {
     sendResponse(res, {
       success: true,
       statusCode: HttpStatus.OK,
-      message: result.message,
+      message: 'Password updated successfully',
       data: result,
     });
   }

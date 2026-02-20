@@ -45,7 +45,7 @@ export class UsersService {
       where: { userId },
       include: {
         menuItem: {
-          include: { category: true, restaurant: true },
+          include: { categories: true, restaurant: true },
         },
       },
     });
@@ -65,7 +65,11 @@ export class UsersService {
           categoryId ? {
             branchMenuItems: {
               some: {
-                menuItem: { categoryId }
+                menuItem: {
+                  categories: {
+                    some: { id: categoryId }
+                  }
+                }
               }
             }
           } : {},
@@ -87,7 +91,7 @@ export class UsersService {
         restaurant: {
           include: {
             menuItems: {
-              include: { category: true, branchItems: { where: { branchId } } }
+              include: { categories: true, branchItems: { where: { branchId } } }
             }
           }
         }
@@ -142,14 +146,14 @@ export class UsersService {
 
       return this.prisma.menuItem.findMany({
         where: { id: { in: trending.map((item) => item.menuItemId) } },
-        include: { category: true, restaurant: true },
+        include: { categories: true, restaurant: true },
       });
     }
 
     // 2. Fetch full details for these items
     return this.prisma.menuItem.findMany({
       where: { id: { in: mostOrdered.map((item) => item.menuItemId) } },
-      include: { category: true, restaurant: true },
+      include: { categories: true, restaurant: true },
     });
   }
 }

@@ -8,10 +8,12 @@ type ApiResponse<T = unknown> = {
   status: number;
 };
 
-async function buildHeaders(withAuth = true): Promise<HeadersInit> {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
+async function buildHeaders(withAuth = true, isFormData = false): Promise<HeadersInit> {
+  const headers: Record<string, string> = {};
+
+  if (!isFormData) {
+    headers["Content-Type"] = "application/json";
+  }
 
   if (withAuth) {
     const token = await getAuthToken();
@@ -64,10 +66,11 @@ async function post<T = unknown>(
   withAuth = true
 ): Promise<ApiResponse<T>> {
   try {
+    const isFormData = body instanceof FormData;
     const res = await fetch(`${API_URL}${path}`, {
       method: "POST",
-      headers: await buildHeaders(withAuth),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      headers: await buildHeaders(withAuth, isFormData),
+      body: isFormData ? (body as FormData) : (body !== undefined ? JSON.stringify(body) : undefined),
     });
     return handleResponse<T>(res);
   } catch (err) {

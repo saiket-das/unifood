@@ -19,6 +19,7 @@ export const metadata: Metadata = {
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/components/providers/query-provider";
 
 export default function RootLayout({
   children,
@@ -37,10 +38,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <TooltipProvider>
-            {children}
-          </TooltipProvider>
-          <Toaster richColors />
+          <QueryProvider>
+            <TooltipProvider>
+              {children}
+            </TooltipProvider>
+            <Toaster richColors />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

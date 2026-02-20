@@ -5,6 +5,8 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { apiClient } from "@/lib/api-client"
+import Link from "next/link"
+import { APP_ROUTES } from "@/lib/routes"
 
 export default async function DashboardLayout({
   children,
@@ -27,7 +29,7 @@ export default async function DashboardLayout({
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-2">Access Denied</h1>
         <p className="text-muted-foreground">This account does not have merchant access.</p>
-        <a href="/login" className="mt-4 text-[#006292] hover:underline">Back to Login</a>
+        <Link href={APP_ROUTES.LOGIN} className="mt-4 text-[#006292] hover:underline">Back to Login</Link>
       </div>
     )
   }
@@ -40,6 +42,8 @@ export default async function DashboardLayout({
     if (!restaurantRes.error && restaurantRes.data) {
       branches = restaurantRes.data.branches
     }
+  } else if (user.role === "STAFF" && user.staffBranch?.branch) {
+    branches = [user.staffBranch.branch]
   }
 
   return (

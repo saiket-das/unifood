@@ -10,7 +10,8 @@ import {
 } from "lucide-react"
 
 import Image from "next/image"
-import { OWNER_ROUTES, STAFF_ROUTES, SECONDARY_ROUTES } from "@/lib/routes"
+import Link from "next/link"
+import { OWNER_ROUTES, STAFF_ROUTES, SECONDARY_ROUTES, APP_ROUTES } from "@/lib/routes"
 import { NavMain } from "./nav-main"
 import { NavSecondary } from "./nav-secondary"
 import { NavUser } from "./nav-user"
@@ -36,6 +37,9 @@ export interface SidebarUser {
   email: string;
   avatar: string;
   role: "OWNER" | "STAFF" | "STUDENT";
+  staffBranch?: {
+    branch: SidebarBranch;
+  };
 }
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
@@ -81,7 +85,7 @@ export function AppSidebar({ user, branches = [], ...props }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        {user.role === "OWNER" ? (
+        {formattedBranches.length > 0 ? (
           <BranchSwitcher branches={formattedBranches} />
         ) : (
           <SidebarMenu>
@@ -91,7 +95,7 @@ export function AppSidebar({ user, branches = [], ...props }: AppSidebarProps) {
                 asChild
                 className="data-[slot=sidebar-menu-button]:!p-1.5"
               >
-                <a href="#">
+                <Link href={APP_ROUTES.DASHBOARD}>
                   <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                     <Image src="/icon.svg" alt="Unifood" width={32} height={32} />
                   </div>
@@ -99,7 +103,7 @@ export function AppSidebar({ user, branches = [], ...props }: AppSidebarProps) {
                     <span className="truncate font-semibold">Unifood</span>
                     <span className="truncate text-xs">Merchant</span>
                   </div>
-                </a>
+                </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

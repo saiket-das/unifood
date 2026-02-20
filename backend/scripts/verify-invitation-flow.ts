@@ -60,7 +60,7 @@ async function bootstrap() {
     console.log('\n3. Verifying password change logic');
     const newPassword = 'newSecurePassword123';
     const changeResult = await authService.changePassword(inviteResult.userId, { newPassword });
-    console.log(`Password change result: ${changeResult.message}`);
+    console.log(`Password changed successfully. New token received: ${changeResult.access_token.substring(0, 10)}...`);
 
     // 4. Verify flag is cleared
     const updatedUser = await prisma.user.findUnique({ where: { id: inviteResult.userId } });
