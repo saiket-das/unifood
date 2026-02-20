@@ -108,7 +108,7 @@ export const ComboboxChips = React.forwardRef<
       ref={ref}
       role="combobox"
       className={cn(
-        "group flex min-h-9 w-full flex-wrap items-center justify-start gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-xs transition-[color,box-shadow]",
+        "group flex min-h-9 w-full flex-wrap items-center justify-start gap-1 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-within:ring-2 focus-within:ring-ring/40 focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-xs transition-[color,box-shadow]",
         className
       )}
       onClick={(e) => {
@@ -198,7 +198,7 @@ export function ComboboxChipsInput({ className, ...props }: React.InputHTMLAttri
       }}
       onKeyDown={handleKeyDown}
       className={cn(
-        "flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px] py-1",
+        "flex-1 bg-transparent outline-none placeholder:text-muted-foreground min-w-[50px] py-0",
         className
       )}
       {...props}

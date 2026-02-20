@@ -9,6 +9,8 @@ import { LayoutDashboard } from "lucide-react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useUserContext } from "@/hooks/use-user-context"
 
+import { MenuSkeleton } from "@/components/menu/menu-skeleton"
+
 export interface MenuItem {
   id: string
   name: string
@@ -141,14 +143,7 @@ export function MenuClient() {
   }
 
   if (isLoadingContext || (isLoadingItems && items.length === 0)) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="flex flex-col items-center gap-2">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-          <p className="text-sm text-muted-foreground">Loading menu...</p>
-        </div>
-      </div>
-    )
+    return <MenuSkeleton />
   }
 
   const role = (user?.role ?? "STAFF") as "OWNER" | "STAFF"

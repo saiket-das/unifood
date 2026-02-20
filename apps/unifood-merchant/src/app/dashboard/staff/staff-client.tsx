@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useUserContext } from "@/hooks/use-user-context"
+import { StaffSkeleton } from "@/components/staff/staff-skeleton"
 
 export function StaffClient() {
   const queryClient = useQueryClient()
@@ -97,6 +98,10 @@ export function StaffClient() {
   const handleDeleteStaff = (staffId: string) => {
     if (!confirm("Are you sure you want to remove this staff member from the branch?")) return
     removeMutation.mutate(staffId)
+  }
+
+  if (isLoadingContext || (isLoading && staff.length === 0)) {
+    return <StaffSkeleton />
   }
 
   const isActionPending = inviteMutation.isPending || toggleMutation.isPending || removeMutation.isPending

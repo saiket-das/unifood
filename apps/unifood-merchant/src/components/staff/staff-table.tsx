@@ -43,7 +43,7 @@ export function StaffTable({ staff, onToggleStatus, onDeleteStaff, isPending }: 
   }
 
   return (
-    <div className="rounded-md border bg-card text-card-foreground shadow-sm">
+    <div className="rounded-md border bg-card text-card-foreground">
       <Table>
         <TableHeader>
           <TableRow>
