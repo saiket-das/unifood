@@ -29,7 +29,7 @@ export default async function DashboardLayout({
       <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
         <h1 className="text-2xl font-bold text-red-600 mb-2">Access Denied</h1>
         <p className="text-muted-foreground">This account does not have merchant access.</p>
-        <Link href={APP_ROUTES.LOGIN} className="mt-4 text-[#006292] hover:underline">Back to Login</Link>
+        <Link href={APP_ROUTES.LOGIN} className="mt-4 text-primary hover:underline">Back to Login</Link>
       </div>
     )
   }

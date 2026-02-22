@@ -54,23 +54,23 @@ export function ImageUpload({
 
   return (
     <div className="space-y-4 w-full flex flex-col items-center justify-center">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-center w-full">
         {value ? (
-          <div className="relative w-[150px] h-[150px] rounded-md overflow-hidden border">
-            <div className="z-10 absolute top-2 right-2">
+          <div className="relative aspect-video w-full rounded-xl overflow-hidden border shadow-inner bg-muted/20">
+            <div className="z-10 absolute top-3 right-3">
               <Button
                 type="button"
                 onClick={() => onRemove()}
                 variant="destructive"
                 size="icon"
-                className="h-6 w-6"
+                className="h-8 w-8 shadow-lg"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
             <img
               className="object-cover w-full h-full"
-              alt="Image"
+              alt="Food Image"
               src={value}
             />
           </div>
@@ -78,19 +78,29 @@ export function ImageUpload({
           <div 
             onClick={() => fileInputRef.current?.click()}
             className={cn(
-              "w-[150px] h-[150px] rounded-md border-2 border-dashed border-muted-foreground/25 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-muted/50 transition",
+              "aspect-video w-full rounded-xl border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center gap-3 cursor-pointer hover:bg-muted/50 transition-all duration-300 group",
               disabled && "opacity-50 cursor-not-allowed",
               isUploading && "pointer-events-none"
             )}
           >
             {isUploading ? (
-              <Loader2 className="h-10 w-10 text-muted-foreground animate-spin" />
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                <span className="text-sm font-medium text-muted-foreground">Uploading Image...</span>
+              </div>
             ) : (
               <>
-                <UploadCloud className="h-10 w-10 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground font-medium text-center px-2">
-                  Click to upload image
-                </span>
+                <div className="p-4 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                  <UploadCloud className="h-10 w-10 text-primary/60 group-hover:text-primary transition-colors" />
+                </div>
+                <div className="text-center">
+                  <span className="text-sm font-semibold text-muted-foreground block">
+                    Click to upload image
+                  </span>
+                  <span className="text-xs text-muted-foreground/60">
+                    Recommended: 1920 x 1080 (16:9)
+                  </span>
+                </div>
               </>
             )}
           </div>

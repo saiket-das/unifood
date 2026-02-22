@@ -9,8 +9,11 @@ export class MenuResolver {
   private toMenuItemType(item: any): MenuItemType {
     return {
       ...item,
-      price: item.price ? Number(item.price) : undefined,
-      unitPrice: item.unitPrice ? Number(item.unitPrice) : undefined,
+      variants: item.variants?.map((v: any) => ({
+        ...v,
+        price: Number(v.price),
+        unitValue: v.unitValue ? Number(v.unitValue) : undefined,
+      })),
     };
   }
 

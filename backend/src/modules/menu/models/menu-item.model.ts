@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID, Float } from '@nestjs/graphql';
+import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
 
 @ObjectType()
 export class CategoryType {
@@ -7,6 +7,33 @@ export class CategoryType {
 
   @Field()
   name: string;
+}
+
+@ObjectType()
+export class MenuItemVariantType {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field()
+  unitType: string;
+
+  @Field(() => Float, { nullable: true })
+  unitValue?: number;
+
+  @Field({ nullable: true })
+  unitLabel?: string;
+
+  @Field(() => Float)
+  price: number;
+
+  @Field()
+  isAvailable: boolean;
+
+  @Field()
+  createdAt: Date;
 }
 
 @ObjectType()
@@ -21,25 +48,25 @@ export class MenuItemType {
   description?: string;
 
   @Field({ nullable: true })
-  imageUrl?: string;
+  photo?: string;
 
   @Field()
-  pricingModel: string;
+  isActive: boolean;
 
-  @Field(() => Float, { nullable: true })
-  price?: number;
+  @Field()
+  isVeg: boolean;
 
-  @Field(() => Float, { nullable: true })
-  unitPrice?: number;
+  @Field()
+  isSpicy: boolean;
 
-  @Field({ nullable: true })
-  unitType?: string;
-
-  @Field(() => Float, { nullable: true })
-  unitSize?: number;
+  @Field(() => Int, { nullable: true })
+  preparationTime?: number;
 
   @Field(() => [CategoryType], { nullable: true })
   categories?: CategoryType[];
+
+  @Field(() => [MenuItemVariantType], { nullable: true })
+  variants?: MenuItemVariantType[];
 
   @Field()
   restaurantId: string;

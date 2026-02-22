@@ -14,7 +14,7 @@ export class MenuService {
       throw new ForbiddenException('You do not own this restaurant');
     }
 
-    const { categoryIds, branchIds, availableInAllBranches, ...menuItemData } = data;
+    const { categoryIds, branchIds, availableInAllBranches, variants, ...menuItemData } = data;
 
     // Create Menu Item with Category connections
     const menuItem = await this.prisma.menuItem.create({
@@ -22,9 +22,20 @@ export class MenuService {
         ...menuItemData,
         restaurantId,
         categories: {
-          connect: categoryIds.map((id: string) => ({ id })),
+          connect: categoryIds?.map((id: string) => ({ id })) || [],
+        },
+        variants: {
+          create: variants?.map((v: any) => ({
+            name: v.name,
+            unitType: v.unitType,
+            unitValue: v.unitValue,
+            unitLabel: v.unitLabel,
+            price: v.price,
+            isAvailable: v.isAvailable ?? true,
+          })) || [],
         },
       },
+      include: { variants: true },
     });
 
     // Link to branches
@@ -55,7 +66,7 @@ export class MenuService {
       throw new ForbiddenException('You do not own this menu item');
     }
 
-    const { categoryIds, branchIds, availableInAllBranches, ...menuItemData } = data;
+    const { categoryIds, branchIds, availableInAllBranches, variants, ...menuItemData } = data;
 
     // Update base fields
     const updatedItem = await this.prisma.menuItem.update({
@@ -65,7 +76,19 @@ export class MenuService {
         categories: categoryIds ? {
           set: categoryIds.map((id: string) => ({ id })),
         } : undefined,
+        variants: variants ? {
+          deleteMany: {},
+          create: variants.map((v: any) => ({
+            name: v.name,
+            unitType: v.unitType,
+            unitValue: v.unitValue,
+            unitLabel: v.unitLabel,
+            price: v.price,
+            isAvailable: v.isAvailable ?? true,
+          })),
+        } : undefined,
       },
+      include: { variants: true, categories: true },
     });
 
     // Update branch links if provided
@@ -112,7 +135,8 @@ export class MenuService {
       where: { restaurantId },
       include: { 
         categories: true,
-        branchItems: true 
+        branchItems: true,
+        variants: true
       },
     });
   }
@@ -131,6 +155,7 @@ export class MenuService {
       },
       include: {
         categories: true,
+        variants: true,
         branchItems: {
           where: { branchId }
         }
@@ -146,7 +171,10 @@ export class MenuService {
           { description: { contains: query, mode: 'insensitive' } },
         ]
       },
-      include: { categories: true },
+      include: { 
+        categories: true,
+        variants: true
+      },
       orderBy: { name: 'asc' },
     });
   }

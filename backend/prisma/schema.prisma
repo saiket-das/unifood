@@ -43,66 +43,65 @@ enum PaymentStatus {
 }
 
 model User {
-  id             String          @id @default(uuid())
-  email          String          @unique
-  password       String
-  name           String
-  role           UserRole        @default(STUDENT)
-  isActive       Boolean         @default(true)
-  needsPasswordChange Boolean     @default(false)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  
-  hostel         String?         // Metadata for students
-  
-  restaurant     Restaurant?     // If role is OWNER
-  staffBranch    StaffBranch?    // If role is STAFF
-  orders         Order[]
-  favorites      Favorite[]
+  id                  String   @id @default(uuid())
+  email               String   @unique
+  password            String
+  name                String
+  role                UserRole @default(STUDENT)
+  isActive            Boolean  @default(true)
+  needsPasswordChange Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  hostel String? // Metadata for students
+
+  restaurant  Restaurant? // If role is OWNER
+  staffBranch StaffBranch? // If role is STAFF
+  orders      Order[]
+  favorites   Favorite[]
 }
 
-
-
 model Restaurant {
-  id        String   @id @default(uuid())
+  id        String     @id @default(uuid())
   name      String
-  ownerId   String   @unique
-  owner     User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  ownerId   String     @unique
+  owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   branches  Branch[]
   menuItems MenuItem[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model Branch {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   name         String
   address      String
   latitude     Float?
   longitude    Float?
   hostelTags   String[] // Array of hostel names served
-  openingHours Json?    // Structured opening hours
+  openingHours Json? // Structured opening hours
   restaurantId String
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
-  
-  staffMembers   StaffBranch[]
+
+  staffMembers    StaffBranch[]
   branchMenuItems BranchMenuItem[]
-  orders         Order[]
-  paymentOptions BranchPaymentOption[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  branchVariants  BranchMenuItemVariant[]
+  orders          Order[]
+  paymentOptions  BranchPaymentOption[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
 }
 
 model BranchPaymentOption {
-  id                String        @id @default(uuid())
-  branchId          String
-  branch            Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  method            PaymentMethod
-  isEnabled         Boolean       @default(true)
-  
+  id        String        @id @default(uuid())
+  branchId  String
+  branch    Branch        @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  method    PaymentMethod
+  isEnabled Boolean       @default(true)
+
   // QR configuration
-  qrCodeImageUrl    String?
-  
+  qrCodeImageUrl String?
+
   // Account Transfer configuration
   bankName          String?
   accountNumber     String?
@@ -120,7 +119,7 @@ model StaffBranch {
   staff    User   @relation(fields: [staffId], references: [id], onDelete: Cascade)
   branchId String
   branch   Branch @relation(fields: [branchId], references: [id])
-  
+
   assignedAt DateTime @default(now())
 }
 
@@ -131,44 +130,85 @@ model Category {
 }
 
 model MenuItem {
-  id           String       @id @default(uuid())
-  name         String
-  description  String?
-  imageUrl     String?
-  pricingModel PricingModel @default(FIXED)
-  
-  // For measured items
-  unitPrice    Decimal?     @db.Decimal(10, 2)
-  unitType     String?      // e.g., "g", "scoop", "portion"
-  unitSize     Float?       // e.g., 100
-  
-  // For fixed items
-  price        Decimal?     @db.Decimal(10, 2)
-  
+  id              String  @id @default(uuid())
+  name            String
+  description     String?
+  photo           String? // Cloudinary URL
+  isActive        Boolean @default(true)
+  isVeg           Boolean @default(false)
+  isSpicy         Boolean @default(false)
+  preparationTime Int? // in minutes
+
   restaurantId String
-  restaurant   Restaurant   @relation(fields: [restaurantId], references: [id])
-  categories   Category[]   @relation("MenuItemCategories")
-  
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  categories   Category[] @relation("MenuItemCategories")
+
+  variants    MenuItemVariant[]
   branchItems BranchMenuItem[]
   orderItems  OrderItem[]
   favorites   Favorite[]
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model MenuItemVariant {
+  id         String   @id @default(uuid())
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  name String // e.g., "Half", "Full", "Small", "Regular"
+
+  unitType  VariantUnitType @default(portion)
+  unitValue Float? // e.g., 100, 500, 1
+  unitLabel String? // g, ml, piece, plate, bowl
+
+  price       Decimal @db.Decimal(10, 2)
+  isAvailable Boolean @default(true)
+
+  branchVariants BranchMenuItemVariant[]
+  orderItems     OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum VariantUnitType {
+  portion
+  size
+  weight
+  volume
+  unit
+}
+
+model BranchMenuItemVariant {
+  id                String          @id @default(uuid())
+  branchId          String
+  branch            Branch          @relation(fields: [branchId], references: [id])
+  menuItemVariantId String
+  menuItemVariant   MenuItemVariant @relation(fields: [menuItemVariantId], references: [id], onDelete: Cascade)
+
+  price       Decimal? @db.Decimal(10, 2) // Override price
+  isAvailable Boolean  @default(true) // Override availability
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([branchId, menuItemVariantId])
+}
+
 model BranchMenuItem {
-  id           String   @id @default(uuid())
-  branchId     String
-  branch       Branch   @relation(fields: [branchId], references: [id])
-  menuItemId   String
-  menuItem     MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  
-  isAvailable  Boolean  @default(true)
-  stockLimit   Int?     // Optional stock limit
-  
+  id         String   @id @default(uuid())
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  menuItemId String
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
+
+  isAvailable Boolean @default(true)
+  stockLimit  Int? // Optional stock limit
+
   // Overrides (if any)
-  priceOverride      Decimal? @db.Decimal(10, 2)
+  priceOverride       Decimal? @db.Decimal(10, 2)
   isAvailableOverride Boolean?
 
   createdAt DateTime @default(now())
@@ -189,30 +229,29 @@ model Favorite {
   @@unique([userId, menuItemId])
 }
 
-
 model Order {
-  id            String      @id @default(uuid())
-  orderNumber   String      @unique // Human readable short id
-  status        OrderStatus @default(PLACED)
-  
-  studentId     String
-  student       User        @relation(fields: [studentId], references: [id])
-  
-  branchId      String
-  branch        Branch      @relation(fields: [branchId], references: [id])
-  
-  totalPrice    Decimal     @db.Decimal(10, 2)
+  id          String      @id @default(uuid())
+  orderNumber String      @unique // Human readable short id
+  status      OrderStatus @default(PLACED)
+
+  studentId String
+  student   User   @relation(fields: [studentId], references: [id])
+
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  totalPrice    Decimal       @db.Decimal(10, 2)
   paymentMethod PaymentMethod
   paymentStatus PaymentStatus @default(UNPAID)
-  
+
   items         OrderItem[]
   statusEvents  OrderStatusEvent[]
   paymentProofs PaymentProof[]
-  
-  cancelReason  String?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+
+  cancelReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model OrderItem {
@@ -221,11 +260,14 @@ model OrderItem {
   order      Order    @relation(fields: [orderId], references: [id])
   menuItemId String
   menuItem   MenuItem @relation(fields: [menuItemId], references: [id], onDelete: Cascade)
-  
-  quantity      Float   @default(1) // Can be float for measured items if needed, but usually 1 order item = 1 menu item entry
-  unitPrice     Decimal @db.Decimal(10, 2)
-  subtotal      Decimal @db.Decimal(10, 2)
-  
+
+  variantId String?
+  variant   MenuItemVariant? @relation(fields: [variantId], references: [id])
+
+  quantity  Float   @default(1) // Can be float for measured items if needed, but usually 1 order item = 1 menu item entry
+  unitPrice Decimal @db.Decimal(10, 2)
+  subtotal  Decimal @db.Decimal(10, 2)
+
   // For measured items, staff will update this
   finalQuantity Float?
   isMeasured    Boolean @default(false)
@@ -237,7 +279,7 @@ model OrderStatusEvent {
   order     Order       @relation(fields: [orderId], references: [id])
   status    OrderStatus
   note      String?
-  staffId   String?     // Who changed the status
+  staffId   String? // Who changed the status
   createdAt DateTime    @default(now())
 }
 
@@ -248,5 +290,3 @@ model PaymentProof {
   imageUrl  String
   createdAt DateTime @default(now())
 }
-
-

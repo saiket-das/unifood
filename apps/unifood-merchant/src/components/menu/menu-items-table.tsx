@@ -33,14 +33,23 @@ export interface MenuItem {
   id: string
   name: string
   description: string | null
-  price: number | null
-  unitPrice: number | null
-  unitType: string | null
-  pricingModel: "FIXED" | "MEASURED"
-  imageUrl?: string | null
+  photo?: string | null
+  isActive: boolean
+  isVeg: boolean
+  isSpicy: boolean
+  preparationTime?: number | null
   categories: {
     id: string
     name: string
+  }[]
+  variants: {
+    id: string
+    name: string
+    price: number
+    isAvailable: boolean
+    unitType?: string
+    unitValue?: number
+    unitLabel?: string
   }[]
   branchItems?: {
     branchId: string
@@ -92,17 +101,15 @@ export function MenuItemsTable({
       const branchItem = currentBranchId 
         ? item.branchItems?.find(bi => bi.branchId === currentBranchId)
         : null
-      
-      const isAvailable = branchItem ? branchItem.isAvailable : true
-      
-      const matchesAvailability = selectedAvailability === "all" || 
-        (selectedAvailability === "available" ? isAvailable : !isAvailable)
-      
-      const matchesPricing = selectedPricing === "all" || item.pricingModel === selectedPricing
 
-      return matchesSearch && matchesCategory && matchesAvailability && matchesPricing
+      const isAvailable = branchItem ? branchItem.isAvailable : true
+
+      const matchesAvailability = selectedAvailability === "all" ||
+        (selectedAvailability === "available" ? isAvailable : !isAvailable)
+
+      return matchesSearch && matchesCategory && matchesAvailability
     })
-  }, [items, searchQuery, selectedCategory, selectedAvailability, selectedPricing, currentBranchId])
+  }, [items, searchQuery, selectedCategory, selectedAvailability, currentBranchId])
 
   return (
     <div className="space-y-4">
@@ -147,24 +154,13 @@ export function MenuItemsTable({
             </SelectContent>
           </Select>
 
-          <Select value={selectedPricing} onValueChange={setSelectedPricing}>
-            <SelectTrigger className="w-[130px] h-9 shrink-0">
-              <SelectValue placeholder="Pricing" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Pricing</SelectItem>
-              <SelectItem value="FIXED">Fixed</SelectItem>
-              <SelectItem value="MEASURED">Measured</SelectItem>
-            </SelectContent>
-          </Select>
 
-          {(searchQuery !== "" || selectedCategory !== "all" || selectedAvailability !== "all" || selectedPricing !== "all") && (
+          {(searchQuery !== "" || selectedCategory !== "all" || selectedAvailability !== "all") && (
             <button
               onClick={() => {
                 setSearchQuery("")
                 setSelectedCategory("all")
                 setSelectedAvailability("all")
-                setSelectedPricing("all")
               }}
               className="flex items-center h-9 gap-1 px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors shrink-0"
             >
@@ -218,9 +214,9 @@ export function MenuItemsTable({
                   <TableRow key={item.id}>
                     <TableCell>
                       <div className="h-10 w-10 rounded-md border bg-muted overflow-hidden">
-                        {item.imageUrl ? (
+                        {item.photo ? (
                           <img 
-                            src={item.imageUrl} 
+                            src={item.photo} 
                             alt={item.name} 
                             className="h-full w-full object-cover"
                           />
@@ -232,13 +228,33 @@ export function MenuItemsTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{item.name}</span>
-                        {item.description && (
-                          <span className="text-xs text-muted-foreground line-clamp-1">
-                            {item.description}
-                          </span>
-                        )}
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{item.name}</span>
+                          {!item.isActive && (
+                            <Badge variant="outline" className="text-[10px] h-4 py-0 text-muted-foreground">Inactive</Badge>
+                          )}
+                          {item.isVeg && (
+                            <div className="flex h-3 w-3 items-center justify-center border border-green-600 rounded-[2px] p-[1px]">
+                              <div className="h-full w-full rounded-full bg-green-600" />
+                            </div>
+                          )}
+                          {item.isSpicy && (
+                            <span title="Spicy">🌶️</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {item.description && (
+                            <span className="text-xs text-muted-foreground line-clamp-1">
+                              {item.description}
+                            </span>
+                          )}
+                          {item.preparationTime && (
+                            <span className="text-[10px] text-muted-foreground shrink-0 border-l pl-2">
+                              {item.preparationTime} min wait
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -249,14 +265,20 @@ export function MenuItemsTable({
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="text-xs uppercase text-muted-foreground">
-                        {item.pricingModel}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {item.pricingModel === "FIXED" 
-                        ? `৳${item.price}` 
-                        : `৳${item.unitPrice}/${item.unitType}`}
+                      {item.variants.length > 1 ? (
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            MYR {Math.min(...item.variants.map(v => v.price))} - MYR {Math.max(...item.variants.map(v => v.price))}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {item.variants.length} Variants
+                          </span>
+                        </div>
+                      ) : item.variants[0] ? (
+                        <span className="text-sm font-medium">MYR {item.variants[0].price}</span>
+                      ) : (
+                        <span className="text-sm text-muted-foreground italic">No price</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">

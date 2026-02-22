@@ -28,12 +28,7 @@ import { Input } from "@/components/ui/input"
 import { loginUser } from "@/app/actions/auth"
 import { APP_ROUTES } from "@/lib/routes"
 
-const loginSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(1, { message: "Password is required" }),
-})
-
-type LoginFormValues = z.infer<typeof loginSchema>
+import { loginSchema, type LoginFormValues } from "@/schemas/auth"
 
 export function LoginForm({
   className,
@@ -81,7 +76,7 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0 border-white/10">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <div className="bg-[#006292] relative hidden md:flex items-center justify-center p-12">
+          <div className="bg-primary relative hidden md:flex items-center justify-center p-12">
             <div className="relative z-10">
               <Image
                 src="/icon.svg"
@@ -93,7 +88,11 @@ export function LoginForm({
             </div>
           </div>
 
-          <form className="p-6 md:p-8" onSubmit={handleSubmit(onSubmit)}>
+          <form 
+            className="p-6 md:p-8" 
+            onSubmit={handleSubmit(onSubmit)}
+            suppressHydrationWarning
+          >
             <FieldGroup>
               <div className="flex flex-col items-center gap-2 text-center mb-6">
                 <h1 className="text-2xl font-bold tracking-tight text-[#001b29]">
@@ -111,6 +110,7 @@ export function LoginForm({
                   placeholder="m@example.com"
                   {...register("email")}
                   aria-invalid={!!errors.email}
+                  suppressHydrationWarning
                 />
                 {errors.email && (
                   <p className="text-sm font-medium text-destructive mt-1">
@@ -123,7 +123,7 @@ export function LoginForm({
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <Link
                     href="#"
-                    className="ml-auto text-sm font-medium text-[#006292] hover:underline underline-offset-4"
+                    className="ml-auto text-sm font-medium text-primary hover:underline underline-offset-4"
                   >
                     Forgot your password?
                   </Link>
@@ -133,6 +133,7 @@ export function LoginForm({
                   type="password"
                   {...register("password")}
                   aria-invalid={!!errors.password}
+                  suppressHydrationWarning
                 />
                 {errors.password && (
                   <p className="text-sm font-medium text-destructive mt-1">
@@ -146,7 +147,8 @@ export function LoginForm({
                 <Button
                   type="submit"
                   disabled={isPending}
-                  className="w-full bg-[#006292] hover:bg-[#004e75] text-white transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-70"
+                  className="w-full bg-primary hover:bg-primary/90 text-white transition-all duration-300 active:scale-[0.98] disabled:opacity-70"
+                  suppressHydrationWarning
                 >
                   {isPending ? (
                     <>
@@ -161,7 +163,7 @@ export function LoginForm({
               
               <div className="text-center text-sm text-slate-500 mt-4">
                 Don&apos;t have an account?{" "}
-                <Link href={APP_ROUTES.SIGNUP} className="font-semibold text-[#006292] hover:underline underline-offset-4">
+                <Link href={APP_ROUTES.SIGNUP} className="font-semibold text-primary hover:underline underline-offset-4">
                   Sign up
                 </Link>
               </div>
@@ -171,9 +173,9 @@ export function LoginForm({
       </Card>
       <div className="px-6 text-center text-xs text-slate-500">
         By clicking login, you agree to our{" "}
-        <Link href="#" className="underline underline-offset-4 hover:text-[#006292]">Terms of Service</Link>{" "}
+        <Link href="#" className="underline underline-offset-4 hover:text-primary">Terms of Service</Link>{" "}
         and{" "}
-        <Link href="#" className="underline underline-offset-4 hover:text-[#006292]">Privacy Policy</Link>.
+        <Link href="#" className="underline underline-offset-4 hover:text-primary">Privacy Policy</Link>.
       </div>
     </div>
   )

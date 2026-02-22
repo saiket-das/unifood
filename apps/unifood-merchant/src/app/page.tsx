@@ -40,7 +40,7 @@ export default function LandingPage() {
         </p>
 
         <div className="flex gap-4 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-500">
-          <Button asChild size="lg" className="bg-[#006292] hover:bg-[#004e75] text-white px-8 text-lg shadow-lg hover:shadow-xl transition-all duration-300">
+          <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 text-lg shadow-lg hover:shadow-xl transition-all duration-300">
             <Link href={APP_ROUTES.LOGIN}>Login</Link>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 px-8 text-lg backdrop-blur-sm transition-all duration-300 bg-transparent">

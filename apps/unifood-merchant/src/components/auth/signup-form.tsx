@@ -23,10 +23,10 @@ export function SignupForm({
 }: React.ComponentProps<"div">) {
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="shadow-2xl border-white/10 pt-8 overflow-hidden relative">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#006292] to-transparent opacity-50" />
+      <Card className="border-white/10 pt-8 overflow-hidden relative">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
         <CardHeader className="text-center flex flex-col items-center gap-4 pb-2">
-          <div className="bg-white p-3 rounded-lg shadow-lg border border-blue-50 relative group">
+          <div className="bg-white p-3 rounded-lg border border-blue-50 relative group">
             <div className="absolute inset-0 bg-blue-50/50 rounded-lg scale-0 group-hover:scale-110 transition-transform duration-500 -z-10" />
             <Image
               src="/logo-navy.svg"
@@ -72,12 +72,12 @@ export function SignupForm({
                 <Input id="confirm-password" type="password" required />
               </Field> */}
               <Field className="gap-2 pt-2">
-                <Button type="submit" className="w-full bg-[#006292] hover:bg-[#004e75] text-white transition-all duration-300 shadow-md hover:shadow-lg active:scale-[0.98]">
+                <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white transition-all duration-300 active:scale-[0.98]">
                   Sign Up
                 </Button>
                 <div className="text-center text-sm text-slate-500">
                   Already have an account?{" "}
-                  <Link href={APP_ROUTES.LOGIN} className="font-semibold text-[#006292] hover:underline underline-offset-4">
+                  <Link href={APP_ROUTES.LOGIN} className="font-semibold text-primary hover:underline underline-offset-4">
                     Login
                   </Link>
                 </div>

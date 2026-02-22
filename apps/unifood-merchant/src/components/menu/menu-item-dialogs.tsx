@@ -36,12 +36,24 @@ export function EditMenuItemDialog({
     name: item.name,
     description: item.description || "",
     categoryIds: item.categories.map((c: any) => c.id),
-    pricingModel: item.pricingModel,
-    price: item.price?.toString() || "",
-    unitPrice: item.unitPrice?.toString() || "",
-    unitType: item.unitType || "portion",
-    unitSize: item.unitSize?.toString() || "1",
-    imageUrl: item.imageUrl || "",
+    photo: item.photo || "",
+    isActive: item.isActive,
+    isVeg: item.isVeg,
+    isSpicy: item.isSpicy,
+    preparationTime: item.preparationTime?.toString() || "",
+    pricingType: (item.variants && item.variants.length > 1) ? "variants" : "fixed",
+    fixedPrice: item.variants?.[0]?.price?.toString() || "",
+    fixedUnitType: (item.variants?.[0]?.unitType as any) || "portion",
+    fixedUnitValue: item.variants?.[0]?.unitValue?.toString() || "1",
+    fixedUnitLabel: item.variants?.[0]?.unitLabel || "",
+    variants: item.variants.map((v: any) => ({
+      name: v.name,
+      unitType: v.unitType || "portion",
+      unitValue: v.unitValue || "1",
+      unitLabel: v.unitLabel || "",
+      price: v.price.toString(),
+      isAvailable: v.isAvailable
+    })),
     // Determine branch availability
     availableInAllBranches: item.branchItems?.length === branches.length,
     branchIds: item.branchItems?.map((bi: any) => bi.branchId) || [],
@@ -59,7 +71,7 @@ export function EditMenuItemDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Menu Item</DialogTitle>
           <DialogDescription>

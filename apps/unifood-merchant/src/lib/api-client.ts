@@ -126,9 +126,9 @@ async function del<T = unknown>(
     });
     return handleResponse<T>(res);
   } catch (err) {
-    console.error(`[apiClient.delete] ${path}:`, err);
+    console.error(`[apiClient.del] ${path}:`, err);
     return { data: null, error: "Something went wrong. Please try again.", status: 0 };
   }
 }
 
-export const apiClient = { get, post, patch, put, delete: del };
+export const apiClient = { get, post, patch, put, del };

@@ -3,6 +3,7 @@
 import { type LucideIcon } from "lucide-react"
 import { usePathname } from "next/navigation"
 
+import { APP_ROUTES } from "@/lib/routes"
 import {
   SidebarGroup,
   SidebarMenu,
@@ -29,8 +30,8 @@ export function NavMain({
       <SidebarMenu>
         {items.map((item) => {
           const isActive =
-            item.url === "/dashboard"
-              ? pathname === "/dashboard"
+            item.url === APP_ROUTES.DASHBOARD
+              ? pathname === APP_ROUTES.DASHBOARD
               : pathname === item.url || pathname.startsWith(item.url + "/")
 
           return (

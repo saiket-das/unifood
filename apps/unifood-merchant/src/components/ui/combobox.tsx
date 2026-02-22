@@ -85,11 +85,7 @@ export function Combobox({
   return (
     <ComboboxContext.Provider value={contextValue}>
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverAnchor asChild>
-          <div className="relative w-full">
-            {children}
-          </div>
-        </PopoverAnchor>
+        {children}
       </Popover>
     </ComboboxContext.Provider>
   )
@@ -104,32 +100,34 @@ export const ComboboxChips = React.forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, children, ...props }, ref) => {
   return (
-    <div
-      ref={ref}
-      role="combobox"
-      className={cn(
-        "group flex min-h-9 w-full flex-wrap items-center justify-start gap-1 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-within:ring-2 focus-within:ring-ring/40 focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 shadow-xs transition-[color,box-shadow]",
-        className
-      )}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          const input = e.currentTarget.querySelector('input');
-          input?.focus();
-        }
-      }}
-      {...props}
-    >
-      {children}
-      <PopoverTrigger asChild>
-        <button 
-          type="button" 
-          className="ml-auto opacity-50 hover:opacity-100 outline-none focus:opacity-100"
-          aria-label="Open selection"
-        >
-          <ChevronDown className="h-4 w-4" />
-        </button>
-      </PopoverTrigger>
-    </div>
+    <PopoverAnchor asChild>
+      <div
+        ref={ref}
+        role="combobox"
+        className={cn(
+          "group flex min-h-9 w-full flex-wrap items-center justify-start gap-1 rounded-md border border-input bg-background px-3 py-1 text-sm ring-offset-background placeholder:text-muted-foreground focus-within:ring-1 focus-within:ring-primary focus-within:border-primary focus-within:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-[color,box-shadow]",
+          className
+        )}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            const input = e.currentTarget.querySelector('input');
+            input?.focus();
+          }
+        }}
+        {...props}
+      >
+        {children}
+        <PopoverTrigger asChild>
+          <button 
+            type="button" 
+            className="ml-auto opacity-50 hover:opacity-100 outline-none focus:opacity-100"
+            aria-label="Open selection"
+          >
+            <ChevronDown className="h-4 w-4" />
+          </button>
+        </PopoverTrigger>
+      </div>
+    </PopoverAnchor>
   )
 })
 ComboboxChips.displayName = "ComboboxChips"
@@ -214,12 +212,20 @@ export function ComboboxContent({
   anchor?: React.RefObject<HTMLDivElement | null> 
 }) {
   const { searchValue } = useCombobox()
+  const [width, setWidth] = React.useState<number | undefined>(undefined)
+
+  React.useEffect(() => {
+    if (anchor?.current) {
+      setWidth(anchor.current.offsetWidth)
+    }
+  }, [anchor])
   
   return (
     <PopoverContent 
       className="p-0 overflow-hidden" 
-      style={{ width: anchor?.current?.offsetWidth }}
+      style={{ width: width || anchor?.current?.offsetWidth || 'auto', minWidth: '200px' }}
       align="start"
+      onOpenAutoFocus={(e) => e.preventDefault()}
     >
       <Command className="w-full" shouldFilter={false}>
         {children}
@@ -229,7 +235,18 @@ export function ComboboxContent({
 }
 
 export function ComboboxEmpty({ children }: { children: React.ReactNode }) {
-  return <CommandEmpty>{children}</CommandEmpty>
+  const { items, searchValue } = useCombobox()
+  
+  // Show if either the source list is empty or filtering returned nothing
+  const shouldShow = !items || items.length === 0 || (searchValue && !items.some(i => i.name?.toLowerCase().includes(searchValue.toLowerCase())))
+  
+  if (!shouldShow) return null
+  
+  return (
+    <div className="py-6 text-center text-sm text-muted-foreground whitespace-pre-wrap px-4">
+      {children}
+    </div>
+  )
 }
 
 export function ComboboxList({ 
@@ -256,10 +273,6 @@ export function ComboboxList({
         <CommandGroup>
           {filteredItems.map((item) => children(item))}
         </CommandGroup>
-      ) : searchValue ? (
-        <div className="py-6 text-center text-sm text-muted-foreground">
-          No matches found.
-        </div>
       ) : null}
     </CommandList>
   )

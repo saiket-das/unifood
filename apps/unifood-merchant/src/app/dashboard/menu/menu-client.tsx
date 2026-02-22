@@ -5,9 +5,12 @@ import { MenuItemsTable } from "@/components/menu/menu-items-table"
 import { AddMenuItemModal } from "@/components/menu/add-menu-item-modal"
 import { apiClient } from "@/lib/api-client"
 import { toast } from "sonner"
-import { LayoutDashboard } from "lucide-react"
+import { Plus, Search, Filter, Edit, Trash2, ChevronLeft, LayoutDashboard } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useUserContext } from "@/hooks/use-user-context"
+import { Button } from "@/components/ui/button"
+import { APP_ROUTES } from "@/lib/routes"
 
 import { MenuSkeleton } from "@/components/menu/menu-skeleton"
 
@@ -15,13 +18,28 @@ export interface MenuItem {
   id: string
   name: string
   description: string | null
-  price: number | null
-  unitPrice: number | null
-  unitType: string | null
-  unitSize: number | null
-  pricingModel: "FIXED" | "MEASURED"
-  categories: { id: string; name: string }[]
-  branchItems?: { branchId: string; isAvailable: boolean }[]
+  photo?: string | null
+  isActive: boolean
+  isVeg: boolean
+  isSpicy: boolean
+  preparationTime?: number | null
+  categories: {
+    id: string
+    name: string
+  }[]
+  variants: {
+    id: string
+    name: string
+    price: number
+    isAvailable: boolean
+    unitType?: string
+    unitValue?: number
+    unitLabel?: string
+  }[]
+  branchItems?: {
+    branchId: string
+    isAvailable: boolean
+  }[]
 }
 
 interface Category {
@@ -42,6 +60,7 @@ interface FullUser {
 
 export function MenuClient() {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const { data: userContext, isLoading: isLoadingContext } = useUserContext()
 
   const user = userContext?.user as FullUser | undefined
@@ -89,7 +108,7 @@ export function MenuClient() {
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiClient.post(`/menu/${user?.restaurant?.id}`, data),
+    mutationFn: (data: any) => apiClient.post<MenuItem>(`/menu/${user?.restaurant?.id}`, data),
     onSuccess: (res) => {
       if (res.error) toast.error(res.error)
       else {
@@ -101,7 +120,7 @@ export function MenuClient() {
 
   const updateMutation = useMutation({
     mutationFn: ({ itemId, data }: { itemId: string; data: any }) =>
-      apiClient.patch(`/menu/${itemId}`, data),
+      apiClient.patch<MenuItem>(`/menu/${itemId}`, data),
     onSuccess: (res) => {
       if (res.error) toast.error(res.error)
       else {
@@ -112,7 +131,7 @@ export function MenuClient() {
   })
 
   const deleteMutation = useMutation({
-    mutationFn: (itemId: string) => apiClient.delete(`/menu/${itemId}`),
+    mutationFn: (itemId: string) => apiClient.del<MenuItem>(`/menu/${itemId}`),
     onSuccess: (res) => {
       if (res.error) toast.error(res.error)
       else {
@@ -136,7 +155,7 @@ export function MenuClient() {
 
   const handleCreateMenuItem = async (data: any): Promise<void> => { await createMutation.mutateAsync(data) }
   const handleUpdateMenuItem = async (itemId: string, data: any): Promise<void> => { await updateMutation.mutateAsync({ itemId, data }) }
-  const handleDeleteMenuItem = async (itemId: string): Promise<void> => { deleteMutation.mutate(itemId) }
+  const handleDeleteMenuItem = async (itemId: string): Promise<void> => { await deleteMutation.mutateAsync(itemId) }
   const handleToggleAvailability = (itemId: string, isAvailable: boolean) => {
     if (!selectedBranchId) return
     toggleAvailabilityMutation.mutate({ itemId, isAvailable })
@@ -162,11 +181,9 @@ export function MenuClient() {
 
         {role === "OWNER" && (
           <div className="flex items-center gap-2">
-            <AddMenuItemModal
-              categories={categories}
-              branches={branches}
-              onSubmit={handleCreateMenuItem}
-            />
+            <Button onClick={() => router.push(APP_ROUTES.MENU_ADD)}>
+              <Plus className="h-4 w-4" /> Add Item
+            </Button>
           </div>
         )}
       </div>

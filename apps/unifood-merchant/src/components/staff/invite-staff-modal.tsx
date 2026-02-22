@@ -64,8 +64,8 @@ export function InviteStaffModal({ onInvite, isPending }: InviteStaffModalProps)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-[#006292] hover:bg-[#004e75] text-white">
-          <UserPlus className="mr-2 h-4 w-4" />
+        <Button className="bg-primary hover:bg-primary/90 text-white px-6">
+          <UserPlus className="h-4 w-4" />
           Invite Staff
         </Button>
       </DialogTrigger>
@@ -127,7 +127,7 @@ export function InviteStaffModal({ onInvite, isPending }: InviteStaffModalProps)
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-[#006292] hover:bg-[#004e75] text-white" disabled={isPending}>
+            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white px-6" disabled={isPending}>
               {isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
