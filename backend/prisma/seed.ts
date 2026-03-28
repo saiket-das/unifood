@@ -40,23 +40,60 @@ async function main() {
   });
 
   // 3. Create Categories
-  const catRice = await prisma.category.upsert({
-    where: { name: 'Rice' },
-    update: {},
-    create: { name: 'Rice' },
-  });
+  const MASTER_CATEGORIES = [
+    'Rice',
+    'Noodles',
+    'Drinks',
+    'Desserts',
+    'Western',
+    'Fast Food',
+    'Healthy/Salads',
+    'Snacks/Small Bites',
+    'Breakfast',
+    'Buffet/Nasi Campur',
+    'Bakery/Pastries',
+    'Mamak/Indian Muslim',
+    'Chinese',
+    'Malay',
+    'Japanese',
+    'Thai',
+    'Korean',
+    'Coffee/Tea',
+    'Juices/Smoothies',
+    'Halal Western',
+    'Vegetarian/Vegan',
+    'Seafood',
+    'Grills/Roasts',
+    'Satay/Skewers',
+    'Soup/Stew',
+    'Pizza',
+    'Burgers',
+    'Sushi',
+    'Pasta',
+    'Mexican',
+    'Middle Eastern',
+    'Indian',
+  ];
 
-  const catDrinks = await prisma.category.upsert({
-    where: { name: 'Drinks' },
-    update: {},
-    create: { name: 'Drinks' },
-  });
+  // Create all master categories
+  for (const name of MASTER_CATEGORIES) {
+    await prisma.category.upsert({
+      where: { name },
+      update: {},
+      create: { name },
+    });
+  }
 
-  const catBuffet = await prisma.category.upsert({
-    where: { name: 'Buffet/Nasi Campur' },
-    update: {},
-    create: { name: 'Buffet/Nasi Campur' },
-  });
+  // Fetch created categories for relations
+  const catRice = await prisma.category.findUnique({ where: { name: 'Rice' } });
+  const catDrinks = await prisma.category.findUnique({ where: { name: 'Drinks' } });
+  const catBuffet = await prisma.category.findUnique({ where: { name: 'Buffet/Nasi Campur' } });
+
+  if (!catRice || !catDrinks || !catBuffet) {
+    const existing = await prisma.category.findMany();
+    console.log('Existing categories:', existing.map(c => c.name));
+    throw new Error('Required seed categories missing');
+  }
 
   // 4. Create Menu Items
   const nasiLemak = await prisma.menuItem.create({
@@ -66,7 +103,9 @@ async function main() {
       price: 7.50,
       pricingModel: PricingModel.FIXED,
       restaurantId: restaurant.id,
-      categoryId: catRice.id,
+      categories: {
+        connect: [{ id: catRice.id }]
+      },
     },
   });
 
@@ -76,7 +115,9 @@ async function main() {
       price: 2.50,
       pricingModel: PricingModel.FIXED,
       restaurantId: restaurant.id,
-      categoryId: catDrinks.id,
+      categories: {
+        connect: [{ id: catDrinks.id }]
+      },
     },
   });
 
@@ -89,7 +130,9 @@ async function main() {
       unitType: 'g',
       unitSize: 100,
       restaurantId: restaurant.id,
-      categoryId: catBuffet.id,
+      categories: {
+        connect: [{ id: catBuffet.id }]
+      },
     },
   });
 
@@ -157,20 +200,12 @@ async function main() {
   // 8. Create Student
   const student = await prisma.user.upsert({
     where: { email: 'student@um.edu.my' },
-    update: {},
+    update: { hostel: 'KK1' },
     create: {
       email: 'student@um.edu.my',
       password: hashedPassword,
       name: 'Ali Student',
       role: UserRole.STUDENT,
-    },
-  });
-
-  await prisma.studentProfile.upsert({
-    where: { userId: student.id },
-    update: { hostel: 'KK1' },
-    create: {
-      userId: student.id,
       hostel: 'KK1',
     },
   });

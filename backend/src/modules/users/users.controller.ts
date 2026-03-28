@@ -49,4 +49,44 @@ export class UsersController {
       data: details,
     });
   }
+
+  @Get('recommendations')
+  @UseGuards(JwtAuthGuard)
+  async getRecommendations(@Req() req: any, @Res() res: Response) {
+    const items = await this.usersService.getRecommendedItems(req.user.sub);
+    sendResponse(res, {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: 'Recommendations retrieved successfully',
+      data: items,
+    });
+  }
+
+  @Get('favorites')
+  @UseGuards(JwtAuthGuard)
+  async getFavorites(@Req() req: any, @Res() res: Response) {
+    const favorites = await this.usersService.getFavorites(req.user.sub);
+    sendResponse(res, {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: 'Favorites retrieved successfully',
+      data: favorites,
+    });
+  }
+
+  @Get('favorites/toggle/:menuItemId')
+  @UseGuards(JwtAuthGuard)
+  async toggleFavorite(
+    @Param('menuItemId') menuItemId: string,
+    @Req() req: any,
+    @Res() res: Response
+  ) {
+    const result = await this.usersService.toggleFavorite(req.user.sub, menuItemId);
+    sendResponse(res, {
+      success: true,
+      statusCode: HttpStatus.OK,
+      message: result.favorited ? 'Added to favorites' : 'Removed from favorites',
+      data: result,
+    });
+  }
 }

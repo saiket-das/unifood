@@ -1,9 +1,11 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as argon2 from 'argon2';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -29,17 +31,9 @@ export class AuthService {
         password: hashedPassword,
         name: dto.name,
         role: dto.role || 'STUDENT',
+        hostel: dto.hostel,
       },
     });
-
-    // If student, create profile
-    if (user.role === 'STUDENT') {
-      await this.prisma.studentProfile.create({
-        data: {
-          userId: user.id,
-        },
-      });
-    }
 
     return this.getTokens(user.id, user.email, user.role);
   }
@@ -58,17 +52,31 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return this.getTokens(user.id, user.email, user.role);
+    return this.getTokens(user.id, user.email, user.role, user.needsPasswordChange);
   }
 
-  async getTokens(userId: string, email: string, role: string) {
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const hashedPassword = await argon2.hash(dto.newPassword);
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password: hashedPassword,
+        needsPasswordChange: false,
+      },
+    });
+
+    return this.getTokens(user.id, user.email, user.role, false);
+  }
+
+  async getTokens(userId: string, email: string, role: string, needsPasswordChange: boolean = false) {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
-        { sub: userId, email, role },
+        { sub: userId, email, role, needsPasswordChange },
         { secret: process.env.JWT_AT_SECRET || 'at-secret', expiresIn: '15m' },
       ),
       this.jwtService.signAsync(
-        { sub: userId, email, role },
+        { sub: userId, email, role, needsPasswordChange },
         { secret: process.env.JWT_RT_SECRET || 'rt-secret', expiresIn: '7d' },
       ),
     ]);
@@ -76,6 +84,7 @@ export class AuthService {
     return {
       access_token: at,
       refresh_token: rt,
+      needsPasswordChange,
     };
   }
 }

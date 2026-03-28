@@ -11,6 +11,22 @@ export class OrdersService {
   ) {}
 
   async createOrder(studentId: string, data: any) {
+    // 1. Validate Payment Method
+    const branchPayment = await this.prisma.branchPaymentOption.findUnique({
+      where: {
+        branchId_method: {
+          branchId: data.branchId,
+          method: data.paymentMethod,
+        },
+      },
+    });
+
+    if (!branchPayment || !branchPayment.isEnabled) {
+      throw new BadRequestException(
+        `Payment method ${data.paymentMethod} is not enabled for this branch`
+      );
+    }
+
     // Generate order number (e.g., UM-XXXX)
     const orderNumber = `UM-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 

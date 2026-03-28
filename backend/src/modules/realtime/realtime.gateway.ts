@@ -37,10 +37,14 @@ export class RealtimeGateway implements OnGatewayConnection, OnGatewayDisconnect
   }
 
   notifyBranch(branchId: string, event: string, data: any) {
-    this.server.to(`branch:${branchId}`).emit(event, data);
+    if (this.server) {
+      this.server.to(`branch:${branchId}`).emit(event, data);
+    }
   }
 
   notifyStudent(studentId: string, event: string, data: any) {
-    this.server.to(`user:${studentId}`).emit(event, data);
+    if (this.server) {
+      this.server.to(`user:${studentId}`).emit(event, data);
+    }
   }
 }
