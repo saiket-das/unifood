@@ -1,8 +1,11 @@
 # UM Food --- Product Requirements Document (PRD)
 
-**Version:** 1.0\
+**Version:** 1.1\
 **Status:** Working baseline\
 **Product:** UM Food
+
+
+**Change history:** 1.1 — Daily menu confirmation and online availability; self pickup and provisional rider delivery with guarded kitchen release, payment boundaries and recovery.
 
 ## 1. Executive summary
 
@@ -279,7 +282,7 @@ increment; **P2** = later enhancement.
 -   **FR-DEL-004 (P0):** Backend shall validate and store offers.
 -   **FR-DEL-005 (P0):** Students shall view eligible offers and select
     one.
--   **FR-DEL-006 (P0):** Exactly one rider shall be assigned to a job.
+-   **FR-DEL-006 (P0):** At most one active rider shall be assigned to a job; historical assignments remain available for reassignment.
 -   **FR-DEL-007 (P0):** Assignment shall be transaction-safe and
     idempotent.
 -   **FR-DEL-008 (P0):** Assigned riders shall update pickup and
@@ -332,7 +335,7 @@ increment; **P2** = later enhancement.
 
 ### Order states
 
-Suggested lifecycle:
+Suggested lifecycle (delivery begins in `PROVISIONAL` and enters `ACCEPTED` only on final confirmation):
 
 `PENDING_RESTAURANT → ACCEPTED → PREPARING → READY → FULFILMENT_IN_PROGRESS → COMPLETED`
 
@@ -354,7 +357,7 @@ Do not derive payment state from order state.
 
 ### Delivery states
 
-`REQUESTED → OFFERING → ASSIGNED → PICKED_UP → DELIVERED → COMPLETED`
+`REQUESTED → OFFERING → ASSIGNED → PICKED_UP → DELIVERED → COMPLETED`; eligible reassignment may return to `OFFERING`.
 
 Exceptions: `EXPIRED`, `CANCELLED`, `DISPUTED`.
 
@@ -396,3 +399,56 @@ The MVP is acceptable when:
 -   Telegram outage does not delete a delivery job.
 -   Restaurant data is inaccessible to unrelated restaurant users.
 -   Financial records can be reconciled and audited.
+
+## 11. P0 availability and guarded delivery requirements
+
+Existing FRs remain applicable; the following extend them.
+
+- **FR-AVAIL-001 (P0):** Each local business day an owner or authorised manager reviews the prior menu state and confirms it before enabling online orders; unavailable items are not reset automatically.
+- **FR-AVAIL-002 (P0):** Authorised staff update individual or bulk available, sold-out or temporarily unavailable states throughout the day; backend enforces restaurant ownership and records actor/time.
+- **FR-AVAIL-003 (P0):** Authorised staff pause/resume online acceptance independent of operating hours and item state; walk-in POS remains available.
+- **FR-AVAIL-004 (P0):** Students see available items with details and price; unavailable items remain visible and labelled with Add to Cart disabled.
+- **FR-AVAIL-005 (P0):** Persisted changes reach student and POS via authorised realtime events; refresh/reconnect retrieves authoritative state.
+- **FR-AVAIL-006 (P0):** Cart conflicts notify the student and require correction; backend revalidates menu, current price, restaurant acceptance and fulfilment at checkout and final confirmation.
+- **FR-FULFIL-001 (P0):** Self Pickup maps to TAKEAWAY, routes to POS for acceptance/rejection, and creates no rider job; DINE_IN remains separately available where enabled.
+- **FR-FULFIL-002 (P0):** Delivery creates a provisional order and job after validation, without a kitchen ticket.
+- **FR-FULFIL-003 (P0):** Authorised restaurant staff give a preliminary capacity decision, preparation duration and expiry; final acceptance is separately recorded at final confirmation.
+- **FR-FULFIL-004 (P0):** A privacy-minimised provisional Telegram request collects offers before preparation; collection and preconfirmation may run in parallel.
+- **FR-FULFIL-005 (P0):** Student selects a non-expired offer showing fee, rider identity, expiry and reliable pickup estimate if available. Automated ranking/selection is P1 or later.
+- **FR-FULFIL-006 (P0):** Backend atomically validates and secures at most one active rider assignment and commits the order idempotently.
+- **FR-FULFIL-007 (P0):** Delivery kitchen release requires current restaurant acceptance and availability, valid rider assignment and satisfied applicable payment conditions; provisional requests never release tickets.
+- **FR-FULFIL-008 (P0):** Configurable deadlines govern restaurant, offer, student selection and assignment stages, with proposed pilot ranges 30–45, 60–90, 30–60 and 15–30 seconds respectively; test and tune them.
+- **FR-FULFIL-009 (P0):** On no rider/expiry, student may retry, switch explicitly to pickup or cancel; Telegram outage retains the job and informs the student. Manual dispatch requires authorised verification and identical safety checks.
+- **FR-FULFIL-010 (P0):** Pickup conversion requires student confirmation, fee removal, recalculation and revalidation, safely closes the delivery job and prevents duplicate committed orders. If already committed but not started, cancel the delivery order and hold/cancel its ticket before creating the linked pickup order; review any payment or refund.
+- **FR-FULFIL-011 (P0):** Before preparation, rider cancellation pauses release and permits renewed search or student alternatives; after preparation starts, urgent reassignment or operator intervention is required.
+- **FR-FULFIL-012 (P0):** Track food and rider fee separately as pending, confirmed, failed, refund required or refund completed; authorised manual confirmation and audited refund decisions are required. Required advance payment delays/failures block release. Cash may remain pending if configured terms allow later collection. QR display, screenshot and declaration do not confirm payment.
+
+### Business rules and transitions
+
+Manual availability does not reserve inventory; final availability checks remain necessary. Payment status is independent from order and delivery status. On pickup, staff acceptance and applicable payment conditions precede kitchen release. On delivery, a valid preliminary decision authorises the backend to record final restaurant acceptance only if it remains unexpired and all final checks pass; if expired or changed, request a fresh decision. An unsuccessful final attempt leaves no committed assignment or ticket, informs the student and permits retry/cancellation; external payment already taken is handled by an audited refund/compensation process, never assumed atomic with PostgreSQL.
+
+| Resource / transition | Authorised actor | Guard / result |
+| --- | --- | --- |
+| Daily menu unconfirmed → confirmed; online paused → accepting | Owner or authorised manager | Current business day confirmed, tenant check and audit; operating hours independently evaluated |
+| Item available ↔ unavailable | Authorised restaurant staff | Tenant check, reason label and audit; notify clients |
+| Delivery provisional / REQUESTED → OFFERING | Backend; eligible riders offer | Valid request, no ticket; deadlines enforced |
+| Preliminary pending → confirmed / rejected | Authorised restaurant staff | Capacity decision, duration and expiry recorded; not final acceptance |
+| OFFERING → ASSIGNED; order PROVISIONAL → ACCEPTED | Student selects; backend commits | Valid preconfirmation, fresh menu/pricing, payment conditions and one eligible rider in one transaction; release ticket |
+| ASSIGNED → OFFERING | Rider cancels or authorised operator | Before preparation hold any unstarted ticket and reopen search; after start urgent reassignment/intervention |
+| ASSIGNED → PICKED_UP → DELIVERED → COMPLETED | Assigned rider / authorised operator | Enforce transition and audit |
+| Provisional → CANCELLED / EXPIRED | Student / backend timer | Close offers/job, resolve payment and notify |
+
+Cancellation and refund decisions have distinct review paths before restaurant confirmation, before rider assignment, after assignment before preparation, during preparation, and after pickup. Record the stage and payment obligation; an authorised operator reviews refund required/completed. Amounts, liability and compensation remain open stakeholder decisions.
+
+### Testable acceptance criteria
+
+- A previous sold-out item stays unavailable until explicitly changed; online acceptance is rejected before the day's confirmation, while walk-in POS still works. A foreign restaurant cannot change it; audit shows actor and time.
+- A missed event is repaired by refresh; a stale cart with a sold-out item cannot pass checkout or delivery final confirmation.
+- Pickup requires staff acceptance and payment conditions and never creates a Telegram job.
+- Competing selections and retries produce one active assignment, one committed order and no duplicate ticket; expiry, rejection, stale price or pending required payment produces no release.
+- No-rider, explicit conversion, Telegram outage and cancellation at each stage expose the documented alternatives; post-start cancellation triggers urgent intervention.
+- Cash and manually confirmed transfers retain separate food and delivery fee records; screenshot alone never confirms payment.
+
+### Open decisions
+
+Stakeholders must approve cancellation/refund amounts, liability and compensation, the payment timing and authorised verifier per fulfilment and obligation, the restaurant-local business-day cutoff, and pilot timeout values after measurement.

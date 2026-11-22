@@ -1,10 +1,13 @@
 # UM Food --- Technical Requirements Document (TRD)
 
-**Version:** 1.0\
+**Version:** 1.1\
 **Status:** Proposed technical baseline\
 **Backend:** NestJS\
 **Frontend:** Next.js\
 **Database:** PostgreSQL
+
+
+**Change history:** 1.1 — Daily menu confirmation and online availability; self pickup and provisional rider delivery with guarded kitchen release, payment boundaries and recovery.
 
 ## 1. Purpose
 
@@ -295,7 +298,15 @@ bill.updated
 kitchen.ticket.created
 kitchen.ticket.updated
 
+restaurant.availability_updated
+menu.item_availability_changed
+delivery.request_created
+delivery.restaurant_preconfirmed
 delivery.offer_received
+delivery.rider_secured
+delivery.confirmed
+delivery.failed
+delivery.expired
 delivery.assigned
 delivery.picked_up
 delivery.delivered
@@ -320,7 +331,7 @@ together.
 
 ### 9.1 Order creation
 
-Within one transaction:
+For pickup or dine-in, within one transaction (delivery first creates a PROVISIONAL order with no ticket and uses section 23 for final confirmation):
 
 1.  Validate restaurant and item availability.
 2.  Load current item, variant and add-on prices.
@@ -355,7 +366,7 @@ Use an idempotency key to prevent duplicate orders from client retries.
 -   Validate job is still in OFFERING state.
 -   Validate selected offer belongs to that job and is eligible.
 -   Atomically change job state and create one assignment.
--   Enforce a unique assignment per job.
+-   Enforce a partial unique index for one ACTIVE assignment per job; retain historical cancelled/completed assignments.
 -   Mark other offers not selected in the same transaction.
 -   Notify Telegram and student through an outbox/worker after commit.
 
@@ -628,3 +639,42 @@ Pipeline should:
 -   [ ] Backup restore tested.
 -   [ ] Monitoring and alerting enabled.
 -   [ ] Restaurant and student support process documented.
+
+## 23. Availability and provisional delivery implementation
+
+### API contract
+
+All routes use `/api/v1`, authenticated tenant/resource checks and standard error envelopes. Mutating retryable commands require an `Idempotency-Key`, scoped to actor and operation; store request hash and result, reject a reused key with different payload. DTOs reject unknown/invalid fields and money uses integer minor units.
+
+| Operation | Actor and request DTO | Success |
+| --- | --- | --- |
+| `POST /restaurants/:id/availability/confirm` | Owner/authorised manager; businessDate | 200 confirmation and timestamp |
+| `PATCH /restaurants/:id/menu/availability` | Authorised staff; items `{itemId,isAvailable,reason}[]` | 200 updated items and versions; atomic bulk |
+| `PATCH /restaurants/:id/accepting-orders` | Authorised manager; `{accepting}` | 200 state; reject enable without daily confirmation |
+| `GET /restaurants/:id/menu` | Student; current menu and availability version | 200 including unavailable items and reason |
+| `POST /delivery-jobs` | Student; restaurant, items/modifiers, location, payment method | 201 provisional order/job, deadlines and price snapshot |
+| `POST /delivery-jobs/:id/preconfirmation` | Authorised restaurant staff; decision, prepMinutes, expiresAt | 200 decision; no final acceptance |
+| `GET /delivery-jobs/:id/offers` | Owning student; no body | 200 eligible offers with fee, rider, expiry and reliable ETA if any |
+| `POST /delivery-jobs/:id/offers` | Linked eligible rider via authenticated bot; amount, expiry, optional reliable ETA | 201 offer |
+| `POST /delivery-jobs/:id/assign` | Owning student; offerId | 200 final confirmed order/assignment; performs final confirmation |
+| `POST /delivery-jobs/:id/cancel` | Owning student or authorised operator; reason | 200 cancelled and payment resolution state |
+| `POST /delivery-jobs/:id/convert-to-pickup` | Owning student; explicit confirmation and current quote/version | 200 closed job and new pending pickup order |
+| `POST /delivery-jobs/:id/reassign` | Authorised operator or backend after rider cancellation; reason | 200 reopened search or intervention state |
+
+Final confirmation is the assign operation, not a second client-side commit. `POST /pos/orders/:id/accept` applies to pickup/dine-in; delivery preconfirmation grants conditional acceptance only until its recorded expiry, and the final transaction records acceptance after all checks. Staff may reject or revoke before commit. `PATCH /delivery-jobs/:id/status` is restricted to the assigned rider or authorised operator and valid transitions. Return 400 for malformed DTO, 401 unauthenticated, 403 forbidden, 404 inaccessible resource, 409 for `DAILY_CONFIRMATION_REQUIRED`, `ITEM_UNAVAILABLE`, `PRICE_CHANGED`, `RESTAURANT_NOT_ACCEPTING`, `FULFILMENT_INELIGIBLE`, `PRECONFIRMATION_EXPIRED`, `OFFER_EXPIRED`, `ASSIGNMENT_CONFLICT`, `PAYMENT_PENDING`, `INVALID_STATE` or `IDEMPOTENCY_CONFLICT`; return current safe details for revalidation. Return 422 for unsupported location and 503 for temporarily unavailable services as appropriate.
+
+### Boundaries, timeouts and recovery
+
+Restaurant opening shows last known states, requires daily confirmation and explicit online enable; business hours are separate. Backend checks item ownership, availability and price on every checkout and again at final delivery confirmation. Availability is manual and does not reserve portions. Persist each change, audit and outbox event together. Student and POS clients subscribe only to authorised restaurant/public menu or own-order rooms; events carry identifiers/version, no private address. On reconnect, version gap, expiry or checkout, invalidate cache and fetch current state; never trust the client snapshot.
+
+Use database locks/conditional transitions, scoped idempotency keys and a partial unique active-assignment index. In one PostgreSQL transaction validate restaurant operating/acceptance and preconfirmation expiry, item availability/current prices, selected offer and rider, and required payment confirmation; secure the rider, record final restaurant acceptance and order commitment, create ticket/release timestamp, history and outbox. Abort on any failed guard. Deduplicate ticket creation and protect pickup conversion against concurrent selection using the same locked job/order. Manual dispatch uses the same service and checks.
+
+BullMQ jobs enforce configurable pilot starting ranges: restaurant 30–45s, offer collection 60–90s, student selection 30–60s, assignment 15–30s; measure and adjust. Persist deadlines and reasons in PostgreSQL, use conditional expiry transitions and a periodic overdue sweep to recover lost queue jobs. On no rider, offer retry, explicitly confirmed pickup conversion or cancellation. Before preparation rider cancellation atomically puts any released, unstarted tickets ON_HOLD and reopens search or offers alternatives; a replacement assignment reactivates the same tickets after guard checks. Explicit pickup conversion may instead cancel the committed delivery order and held tickets and create one linked pickup order under the same lock and refund review; after preparation starts initiate urgent reassignment or operator escalation.
+
+Outbox workers deliver events and Telegram notifications at least once with event IDs, deduplication, bounded retries, backoff and dead-letter alerts. If Telegram fails, retain the provisional job, notify the student, and retry or use authorised manual dispatch. Public messages contain neither private contact nor precise personal delivery location. Send necessary details privately only to the assigned rider. PostgreSQL, Telegram and external payment systems do not share an atomic transaction: if an external action succeeds but final confirmation fails, record a durable compensation task, release/cancel any external authorisation or initiate an authorised refund, notify parties and reconcile; never release the kitchen on uncertainty.
+
+Cash and manually confirmed QR/bank transfer are MVP methods. For pickup and delivery, payment required in advance must be confirmed by an authorised verifier before release; permitted pay-later cash may remain pending. QR display, screenshot or declaration alone is not confirmation. Separate food bill allocations from delivery fee payments; record pending, confirmed, failed, refund required and refund completed independently of order status. If required confirmation is delayed or fails, hold release, notify and allow resolution or cancellation. Review cancellation/refund separately before restaurant confirmation, before assignment, after assignment before preparation, during preparation and after pickup; amounts and liability remain open policy.
+
+### Validation and release gates
+
+Integration and concurrency tests must race availability changes and checkout, competing offer selections, expiry versus confirmation, retry versus conversion and rider cancellation versus ticket start; assert one active rider, one committed order and no premature or duplicate ticket. Test outbox redelivery, missed WebSocket refresh, payment delays/failure, Telegram outage, authorised manual dispatch and tenant isolation. End-to-end cover opening, bulk sold-out changes, stale cart, pickup without Telegram, delivery preconfirmation/offer/final release, timeout alternatives, explicit conversion and pre/post-preparation cancellation. Release requires these checks, pilot-tuned deadlines, monitored queues and an exercised operator escalation/refund procedure.

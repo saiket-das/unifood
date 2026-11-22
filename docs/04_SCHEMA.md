@@ -1,10 +1,13 @@
 # UM Food --- Database Schema and ERD
 
-**Version:** 1.0\
+**Version:** 1.1\
 **Database:** PostgreSQL\
 **ORM:** Prisma\
 **Status:** Logical schema baseline; implementation details require
 review.
+
+
+**Change history:** 1.1 — Daily menu confirmation and online availability; self pickup and provisional rider delivery with guarded kitchen release, payment boundaries and recovery.
 
 ## 1. Design principles
 
@@ -34,7 +37,7 @@ CREATE TYPE restaurant_role AS ENUM ('OWNER', 'MANAGER', 'CASHIER', 'WAITER', 'K
 CREATE TYPE order_source AS ENUM ('STUDENT_APP', 'STAFF_POS');
 CREATE TYPE fulfilment_type AS ENUM ('DINE_IN', 'TAKEAWAY', 'DELIVERY');
 CREATE TYPE order_status AS ENUM (
-  'PENDING_RESTAURANT', 'ACCEPTED', 'PREPARING', 'READY',
+  'PROVISIONAL', 'PENDING_RESTAURANT', 'ACCEPTED', 'PREPARING', 'READY',
   'FULFILMENT_IN_PROGRESS', 'COMPLETED', 'REJECTED', 'CANCELLED', 'DISPUTED'
 );
 CREATE TYPE payment_status AS ENUM (
@@ -49,8 +52,13 @@ CREATE TYPE delivery_status AS ENUM (
   'REQUESTED', 'OFFERING', 'ASSIGNED', 'PICKED_UP', 'DELIVERED',
   'COMPLETED', 'EXPIRED', 'CANCELLED', 'DISPUTED'
 );
+CREATE TYPE availability_reason AS ENUM ('SOLD_OUT', 'TEMPORARILY_UNAVAILABLE');
+CREATE TYPE preconfirmation_status AS ENUM ('PENDING', 'CONFIRMED', 'REJECTED', 'EXPIRED');
+CREATE TYPE assignment_status AS ENUM ('ACTIVE', 'CANCELLED', 'COMPLETED');
+CREATE TYPE payment_record_status AS ENUM ('PENDING', 'CONFIRMED', 'FAILED', 'REFUND_REQUIRED', 'REFUND_COMPLETED');
+CREATE TYPE payment_purpose AS ENUM ('FOOD', 'DELIVERY_FEE');
 CREATE TYPE offer_status AS ENUM ('PENDING', 'SELECTED', 'NOT_SELECTED', 'WITHDRAWN', 'EXPIRED');
-CREATE TYPE ticket_status AS ENUM ('NEW', 'IN_PROGRESS', 'READY', 'CANCELLED');
+CREATE TYPE ticket_status AS ENUM ('NEW', 'ON_HOLD', 'IN_PROGRESS', 'READY', 'CANCELLED');
 CREATE TYPE bill_status AS ENUM ('OPEN', 'PARTIALLY_PAID', 'PAID', 'VOIDED');
 CREATE TYPE shift_status AS ENUM ('OPEN', 'CLOSED', 'REVIEW_REQUIRED');
 ```
@@ -145,7 +153,9 @@ price overrides and shift approval.
 -   `takeaway_enabled BOOLEAN`
 -   `delivery_enabled BOOLEAN`
 -   `student_app_enabled BOOLEAN`
--   `accepting_orders BOOLEAN`
+-   `accepting_orders BOOLEAN` (online only; unique `restaurant_id`)
+-   `confirmed_business_date DATE NULL`, `confirmed_by UUID FK users NULL`, `confirmed_at TIMESTAMPTZ NULL`
+-   `acceptance_updated_by UUID FK users NULL`
 -   `updated_at`
 
 ## 5. Menu and pricing tables
@@ -179,6 +189,7 @@ price overrides and shift approval.
 -   `base_price_minor BIGINT NULL`
 -   `unit_of_measure VARCHAR NULL` (e.g. PIECE, GRAM, KG, PORTION)
 -   `is_available BOOLEAN`
+-   `unavailability_reason availability_reason NULL`, `availability_updated_at TIMESTAMPTZ`, `availability_updated_by UUID FK users NULL`
 -   `allow_custom_price BOOLEAN DEFAULT FALSE`
 -   `min_custom_price_minor BIGINT NULL`
 -   `max_custom_price_minor BIGINT NULL`
@@ -296,7 +307,9 @@ WHERE status IN ('OPEN', 'CLOSING');
 -   `charges_minor BIGINT DEFAULT 0`
 -   `total_minor BIGINT`
 -   `customer_note TEXT NULL`
--   `accepted_at TIMESTAMPTZ NULL`
+-   `accepted_at TIMESTAMPTZ NULL` (final acceptance)
+-   `kitchen_released_at TIMESTAMPTZ NULL`
+-   `converted_from_order_id UUID FK orders NULL UNIQUE`
 -   `completed_at TIMESTAMPTZ NULL`
 -   `idempotency_key VARCHAR NULL`
 -   `created_at`, `updated_at`
@@ -412,7 +425,9 @@ split-bill workflows.
 -   `amount_minor BIGINT`
 -   `currency CHAR(3) DEFAULT 'MYR'`
 -   `method payment_method`
--   `status VARCHAR`
+-   `status payment_record_status`
+-   `purpose payment_purpose`
+-   `delivery_job_id UUID FK delivery_jobs NULL` (required only for DELIVERY_FEE)
 -   `provider_reference VARCHAR NULL`
 -   `recorded_by UUID FK users NULL`
 -   `confirmed_at TIMESTAMPTZ NULL`
@@ -499,8 +514,9 @@ payment obligation.
 -   `dropoff_longitude DECIMAL NULL`
 -   `delivery_fee_minor BIGINT NULL`
 -   `currency CHAR(3) DEFAULT 'MYR'`
--   `offer_deadline TIMESTAMPTZ NULL`
--   `assigned_rider_id UUID FK rider_profiles NULL`
+-   `restaurant_deadline TIMESTAMPTZ NULL`, `offer_deadline TIMESTAMPTZ NULL`, `selection_deadline TIMESTAMPTZ NULL`, `assignment_deadline TIMESTAMPTZ NULL`
+-   `preconfirmation_status preconfirmation_status`, `preconfirmed_by UUID FK users NULL`, `preconfirmed_at TIMESTAMPTZ NULL`, `preconfirmation_expires_at TIMESTAMPTZ NULL`, `estimated_prep_minutes INTEGER NULL`
+-   `final_confirmed_at TIMESTAMPTZ NULL`, `failure_reason VARCHAR NULL`
 -   `created_at`, `updated_at`
 
 ### delivery_offers
@@ -510,6 +526,7 @@ payment obligation.
 -   `rider_profile_id UUID FK`
 -   `offer_amount_minor BIGINT`
 -   `status offer_status`
+-   `expires_at TIMESTAMPTZ`, `estimated_pickup_at TIMESTAMPTZ NULL` (only with reliable source)
 -   `created_at`
 -   Unique `(delivery_job_id, rider_profile_id)` if one active offer per
     rider/job is the chosen policy.
@@ -517,9 +534,10 @@ payment obligation.
 ### delivery_assignments
 
 -   `id UUID PK`
--   `delivery_job_id UUID FK UNIQUE`
+-   `delivery_job_id UUID FK`
 -   `rider_profile_id UUID FK`
--   `offer_id UUID FK`
+-   `offer_id UUID FK delivery_offers`
+-   `status assignment_status`, `ended_at TIMESTAMPTZ NULL`, `end_reason VARCHAR NULL`
 -   `assigned_at TIMESTAMPTZ`
 -   `picked_up_at TIMESTAMPTZ NULL`
 -   `delivered_at TIMESTAMPTZ NULL`
@@ -533,6 +551,7 @@ payment obligation.
 -   `to_status VARCHAR`
 -   `actor_user_id UUID FK users NULL`
 -   `actor_rider_id UUID FK rider_profiles NULL`
+-   `reason VARCHAR NULL`, `source VARCHAR`
 -   `created_at`
 
 ### telegram_messages
@@ -650,7 +669,8 @@ unnecessary personal data in audit payloads.
 -   Unique partial index for one open dining session per table.
 -   Index `delivery_jobs(status, offer_deadline)`.
 -   Index `delivery_offers(delivery_job_id, status)`.
--   Unique constraint for one assignment per delivery job.
+-   Partial unique index on `delivery_assignments(delivery_job_id) WHERE status = 'ACTIVE'`; historical assignments remain.
+-   Index delivery deadlines, preconfirmation expiry and outbox pending events.
 -   Index `user_interactions(user_id, occurred_at DESC)`.
 -   Index `menu_items(restaurant_id, is_available)`.
 -   Index `audit_logs(restaurant_id, created_at DESC)`.
@@ -681,7 +701,14 @@ erDiagram
     PAYMENTS ||--o{ PAYMENT_ALLOCATIONS : allocated
     ORDERS ||--o| DELIVERY_JOBS : may_create
     DELIVERY_JOBS ||--o{ DELIVERY_OFFERS : receives
-    DELIVERY_JOBS ||--o| DELIVERY_ASSIGNMENTS : assigned
+    DELIVERY_JOBS ||--o{ DELIVERY_ASSIGNMENTS : assignment_history
+    RESTAURANTS ||--|| RESTAURANT_FULFILMENT_SETTINGS : configures
+    DELIVERY_JOBS ||--o{ PAYMENTS : delivery_fee
+    USERS ||--o{ AUDIT_LOGS : performs
+    ORDERS ||--o{ ORDER_STATUS_HISTORY : records
+    DELIVERY_JOBS ||--o{ DELIVERY_STATUS_HISTORY : records
+    DELIVERY_OFFERS ||--o{ DELIVERY_ASSIGNMENTS : selected_for
+    RESTAURANTS ||--o{ AUDIT_LOGS : owns
     RIDER_PROFILES ||--o{ DELIVERY_OFFERS : submits
 ```
 
@@ -691,15 +718,27 @@ erDiagram
     restaurant-level menu.
 2.  Whether dine-in bills are always one per session or can be split
     into multiple independent bills.
-3.  Whether a delivery job is created at checkout or after restaurant
-    acceptance.
+3.  Restaurant-local business-day cutoff and multi-location menu scope.
 4.  Whether custom pricing is allowed for all items or only selected
     items.
 5.  Whether weight-based pricing is needed in the first pilot.
-6.  Whether restaurant QR payment is manually confirmed or integrated
-    with a provider.
-7.  Whether inventory and stock decrement are in scope.
+6.  Payment timing and authorised manual verifier by fulfilment and obligation; gateway is future scope.
+7.  Cancellation/refund amounts and liability policy; inventory decrement is future scope.
 8.  Whether multiple currencies are ever required; MVP assumes MYR.
 
 Do not generate production migrations until these decisions and
 constraints have been reviewed.
+
+## 17. Availability, provisional delivery and integrity details
+
+The MVP uses the existing unified `orders` and `order_items` as the provisional checkout record: a delivery starts `PROVISIONAL`, with snapshots and exactly one `delivery_jobs.order_id`; it is not a committed food order and cannot have kitchen tickets. This avoids a second checkout-intent model. `PROVISIONAL → ACCEPTED` occurs only at final confirmation; preliminary capacity does not accept the order. For conversion, cancel the provisional order and job and create one new `PENDING_RESTAURANT` TAKEAWAY order linked by unique `converted_from_order_id`, all in one transaction after explicit confirmation and revalidation. Self pickup never has a delivery job. For a committed delivery with an unstarted ticket, an explicitly approved switch cancels the old delivery order and holds/cancels its ticket before creating the linked pickup order under the same lock; apply applicable refund review and never create two active committed orders.
+
+The settings row is restaurant-scoped in the pilot; `confirmed_business_date` uses the restaurant location timezone and agreed cutoff, and must match the current business date before enabling or accepting online orders. Retain item flags across days. `audit_logs` provides item availability and acceptance history, with before/after, actor, tenant and time; index `(entity_type, entity_id, created_at)` for history. `is_available = true` requires null reason; false requires a reason. Updates, audit and outbox insert share a transaction. Enforce item/category/menu ownership via composite tenant foreign keys or equivalent constraints, and validate every item in a bulk update.
+
+`delivery_jobs` belongs to a DELIVERY order; add preconfirmation expiry and deadline indexes. `delivery_offers` belongs to a job and rider; enforce offer/job consistency using a composite FK on `(offer_id, delivery_job_id)` for assignments. Lock the job and order, check selected unexpired offer, eligible rider and unexpired restaurant decision, fresh prices, availability, acceptance and payment terms. In one transaction create the sole ACTIVE assignment, set final confirmation and order acceptance timestamps, create ticket(s), record `kitchen_released_at`, histories and outbox events. Enforce one active assignment with the partial unique index; a unique `(order_id, station_id)` or equivalent release key prevents duplicate tickets on retries. Enforce timestamps/state with checks where possible and a single transactional service or database trigger for cross-table invariants; reject any delivery ticket or PREPARING transition without a committed order, active assignment, valid final acceptance and satisfied payment conditions. A cancellation before preparation must invalidate the active assignment and put any released but unstarted tickets on hold transactionally; a replacement assignment reactivates the same tickets after guards pass, without a second order or ticket. after preparation begins keep the order in intervention/reassignment and preserve ticket history. A transaction cannot cover Telegram or external payments.
+
+Food `payments` allocate to bills; DELIVERY_FEE payments reference the job and never allocate to food bills. Enforce purpose/link consistency and amount/currency checks. Payment record states map to pending, confirmed, failed, refund required and refund completed; existing aggregate `payment_status` on orders remains independent of order and delivery state. Refund rows and audit preserve the decisions and manual confirmation actor.
+
+### transactional_outbox
+
+`id UUID PK`, `aggregate_type VARCHAR`, `aggregate_id UUID`, `event_type VARCHAR`, `payload JSONB`, `created_at TIMESTAMPTZ`, `published_at TIMESTAMPTZ NULL`, `attempts INTEGER`, `next_attempt_at TIMESTAMPTZ NULL`, `last_error TEXT NULL`; index unpublished rows by next attempt. Persist in the same transaction as business changes; a worker publishes idempotently and retries. Consumers deduplicate on event ID.

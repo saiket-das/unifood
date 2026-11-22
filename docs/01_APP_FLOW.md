@@ -1,10 +1,13 @@
 # UM Food --- Application Flows
 
 **Document:** App Flow\
-**Version:** 1.0\
+**Version:** 1.1\
 **Status:** Working baseline\
 **Scope:** Student app, restaurant POS/dashboard, kitchen display,
 platform administration and Telegram delivery integration.
+
+
+**Change history:** 1.1 — Daily menu confirmation and online availability; self pickup and provisional rider delivery with guarded kitchen release, payment boundaries and recovery.
 
 ## 1. Product overview
 
@@ -129,47 +132,40 @@ checkout is deferred.
 **Important:** App-based dine-in does not reserve a table automatically.
 No table QR scan is used in the MVP.
 
-### 3.5 Takeaway order
+### 3.5 Self Pickup (TAKEAWAY)
 
-1.  Student selects a restaurant and chooses Takeaway.
-2.  Student selects menu items.
-3.  Student checks out and pays or selects an allowed payment method.
-4.  Restaurant accepts the order and sets or confirms an estimated
-    preparation time.
-5.  Kitchen prepares the order.
-6.  Restaurant marks it Ready for Collection.
-7.  Student receives a notification.
-8.  Student collects the order.
-9.  Restaurant or student confirms collection.
-10. Order is completed.
+1. Student chooses Self Pickup, selects available items and reviews checkout. The backend validates current prices, restaurant status, online acceptance, fulfilment eligibility and availability.
+2. The order goes directly to the POS as `PENDING_RESTAURANT`; staff accept or reject it. No rider job or Telegram request is created.
+3. After acceptance and any required payment confirmation, a kitchen ticket is released. Staff prepare and mark Ready for Collection; the student is notified, collects it, and staff complete the order.
 
-### 3.6 Delivery order
+### 3.6 Rider Pickup / Delivery (DELIVERY)
 
-1.  Student selects Delivery.
-2.  Student chooses or enters a supported drop-off location.
-3.  Student reviews the restaurant's pickup location and delivery
-    availability.
-4.  Student places the food order.
-5.  Restaurant accepts the order and provides an estimated ready time.
-6.  Backend creates a delivery job at the configured dispatch point.
-7.  Telegram bot publishes a structured request to the approved delivery
-    group.
-8.  Riders submit delivery-fee offers using bot interactions.
-9.  Backend validates and stores offers.
-10. Student sees eligible offers and selects one.
-11. Backend atomically assigns the rider and closes other offers.
-12. Rider receives assignment details.
-13. Restaurant prepares food.
-14. Rider confirms pickup.
-15. Rider delivers the food.
-16. Rider marks delivered; student may confirm receipt.
-17. Delivery fee payment is recorded separately from restaurant food
-    payment.
-18. Delivery job and food order are closed.
+The student chooses delivery and an eligible location. The backend validates current price, menu, restaurant operating and acceptance status and fulfilment eligibility, then creates a `PROVISIONAL` order and delivery job. Staff receive a preliminary capacity request and supply a decision and estimated preparation duration; this is not final acceptance. A clearly provisional, privacy-minimised Telegram request collects rider offers, potentially in parallel. No ticket or preparation is permitted.
 
-**Fallback:** If Telegram is unavailable or no rider accepts, the job
-remains pending and an authorised operator can handle it manually. The
-food order remains visible and is not silently cancelled.
+The student sees each eligible offer's fee, rider identity, expiry and pickup arrival estimate only when reliable, and selects one. The backend checks current availability, price, restaurant preconfirmation and expiry, rider and offer eligibility, and payment conditions. A single transaction secures one rider, records final restaurant acceptance, commits the order and releases the ticket; the restaurant receives the final order and the assigned rider receives necessary private pickup/drop-off information. Staff prepare, the rider picks up and delivers, and the order and separate delivery-fee records are reconciled. Manual availability does not reserve stock: a final check is mandatory.
+
+```mermaid
+flowchart TD
+    A[Student selects delivery and location] --> B[Validate and create provisional order and job]
+    B --> C[Restaurant preliminary capacity decision]
+    B --> D[Provisional Telegram offers]
+    C --> E{Preconfirmed and eligible offer selected?}
+    D --> E
+    E -->|Yes| F[Revalidate price, availability, rider and payment]
+    F -->|Pass| G[Atomic assignment, final acceptance and kitchen release]
+    G --> H[Prepare, pickup and deliver]
+    F -->|Fail| I[Notify and recover or cancel]
+    E -->|Timeout or no rider| I
+    I --> J[Retry rider search]
+    I --> K[Student confirms switch to self pickup]
+    I --> L[Cancel provisional request]
+```
+
+Pilot starting timeout ranges, configurable and subject to testing: restaurant preconfirmation 30–45 seconds, offer collection 60–90 seconds, student selection 30–60 seconds, assignment confirmation 15–30 seconds. No rider: offer retry, explicit switch to Self Pickup, or cancellation. On switch, close the job, remove uncommitted delivery fee, recalculate and revalidate before creating the pickup order; prevent duplicate committed orders. Never silently convert.
+
+Telegram outage leaves the request in PostgreSQL and informs the student; an authorised operator may dispatch manually only with equivalent eligibility, assignment and release checks. If a rider cancels before preparation, hold any released but unstarted ticket and reopen search or offer the alternatives; a replacement rider reactivates that ticket after checks. An approved pickup switch cancels the committed delivery order and its held ticket before creating a linked pickup order, with payment review. After preparation starts, urgently reassign or escalate to an authorised operator. Track cancellation/refund decisions separately before restaurant confirmation, before assignment, after assignment but before preparation, during preparation, and after pickup; liability and compensation are open policy decisions. Do not promise a refund amount before policy approval.
+
+Cash may remain pending when the configured payment terms permit collection later. Manual QR/bank transfer requiring advance payment must be confirmed by authorised staff before release; a QR display, screenshot or declaration is not confirmation. Pending or failed required payment holds release and prompts resolution or cancellation. Record food and rider fees separately, including pending, confirmed, failed, refund required and refund completed, independently of order/delivery status.
 
 ### 3.7 Order history and reorder
 
@@ -246,11 +242,11 @@ food order remains visible and is not silently cancelled.
 1.  POS receives an incoming online order.
 2.  Staff reviews items, fulfilment type and requested instructions.
 3.  Staff accepts or rejects the order with a reason.
-4.  Accepted order enters the kitchen workflow.
+4.  Accepted pickup/dine-in order enters the kitchen only after applicable payment conditions; delivery follows the guarded final confirmation in section 3.6.
 5.  Staff updates preparation status.
 6.  For dine-in, staff assigns a table or seating instruction.
 7.  For takeaway, staff marks Ready and then Collected.
-8.  For delivery, staff coordinates readiness with dispatch.
+8.  For delivery, staff first preconfirm capacity; final acceptance and kitchen release follow secured assignment and payment checks.
 9.  POS and student app receive status updates.
 
 ### 4.6 Custom pricing
@@ -350,7 +346,7 @@ whole Telegram group.
 
 ### 5.2 Offer and assignment
 
--   Bot posts a minimal delivery request.
+-   Bot posts a minimal request clearly marked provisional, without customer contact or precise personal drop-off details.
 -   Rider submits an offer amount.
 -   Backend validates job state and offer deadline.
 -   Student sees valid offers.
@@ -366,7 +362,7 @@ whole Telegram group.
 
 Allowed transitions:
 
-`REQUESTED → OFFERING → ASSIGNED → PICKED_UP → DELIVERED → COMPLETED`
+`REQUESTED → OFFERING → ASSIGNED → PICKED_UP → DELIVERED → COMPLETED` (with `OFFERING` re-entered on eligible reassignment).
 
 Alternative terminal or exception states:
 
@@ -401,3 +397,9 @@ recorded with actor, timestamp and source.
 -   All important state changes are audited.
 -   Telegram is an integration channel, not the source of truth.
 -   No table QR ordering in the initial release.
+
+## 8. Daily menu availability and online opening
+
+At each restaurant-local business day opening, an owner or authorised manager reviews the configured menu and latest known availability, individually or in bulk marks items available, sold out or temporarily unavailable, and confirms the day. Yesterday's sold-out state is never reset automatically. Staff then explicitly enable online acceptance; business hours and this switch are distinct. They may pause/resume online orders independently, and change items throughout the day. The POS records actor and time for each change; backend permissions and tenant ownership apply. Authorised walk-in POS operations continue when online orders are paused.
+
+Students see available items with details and price and can add them to cart. Unavailable items stay visible with Sold out or Temporarily unavailable and disabled Add to Cart. If a cart item changes, notify the student and require an updated cart. NestJS validates and persists changes, records audit history, and emits WebSocket updates to authorised POS and student subscribers; reconnect, refresh and checkout revalidate from the server if events are missed. Manual flags do not reserve portions. Quantity decrement and inventory are future enhancements.
