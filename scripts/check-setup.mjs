@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { log } from 'node:console';
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { join, resolve } from 'node:path';
 import { URL } from 'node:url';
 import { parseEnv } from 'node:util';
 import ts from 'typescript';
+import { envDirs, webApps } from './env-files.mjs';
 
 const host = {
   ...ts.sys,
@@ -35,86 +36,102 @@ function envUrl(value, label) {
   }
 }
 
-const template = parseEnv(readFileSync('.env.example', 'utf8'));
-for (const file of ['.env.example', '.env']) {
-  if (!existsSync(file)) continue;
-  const env = parseEnv(readFileSync(file, 'utf8'));
-  assert(
-    Object.keys(template).every((key) => key in env),
-    `${file} has missing keys`,
-  );
+function loadEnvSet(name) {
+  const set = {};
+  for (const dir of envDirs) {
+    const path = join(dir, name);
+    if (existsSync(path)) set[dir] = parseEnv(readFileSync(path, 'utf8'));
+  }
+  return set;
+}
 
-  const webOrigins = ['STUDENT', 'RESTAURANT', 'ADMIN'].map(
-    (app) => env[`${app}_URL`],
+function checkEnvSet(set, name) {
+  const docker = set['infra/docker'];
+  const backend = set['apps/backend'];
+
+  const api = envUrl(backend.API_URL, `apps/backend/${name} API_URL`);
+  assert(
+    api.protocol === 'http:' && api.hostname === 'localhost',
+    `apps/backend/${name} expects an http://localhost API_URL`,
   );
   assert.equal(
-    env.CORS_ORIGINS,
-    webOrigins.join(','),
-    `${file} CORS origins do not match`,
+    api.port,
+    backend.PORT,
+    `apps/backend/${name} API_URL and PORT disagree`,
   );
 
-  for (const app of ['API', 'STUDENT', 'RESTAURANT', 'ADMIN']) {
-    const url = envUrl(env[`${app}_URL`], `${file} ${app}_URL`);
+  for (const app of webApps) {
     assert.equal(
-      url.protocol,
-      'http:',
-      `${file} expects HTTP for local web development`,
-    );
-    assert.equal(
-      url.hostname,
-      'localhost',
-      `${file} expects localhost application URLs`,
-    );
-    assert.equal(
-      url.port,
-      env[`${app}_PORT`],
-      `${file} has a mismatched ${app} port`,
+      set[app].NEXT_PUBLIC_API_URL,
+      backend.API_URL,
+      `${app}/${name} NEXT_PUBLIC_API_URL must equal the backend API_URL`,
     );
   }
-
-  const database = envUrl(env.DATABASE_URL, `${file} DATABASE_URL`);
-  const redis = envUrl(env.REDIS_URL, `${file} REDIS_URL`);
-  assert(
-    database.protocol === 'postgresql:',
-    `${file} has an invalid DATABASE_URL protocol`,
+  assert.equal(
+    backend.CORS_ORIGINS,
+    webApps.map((app) => `http://localhost:${set[app].PORT}`).join(','),
+    `apps/backend/${name} CORS_ORIGINS must list the web app ports`,
   );
+
+  const database = envUrl(backend.DATABASE_URL, 'DATABASE_URL');
+  const redis = envUrl(backend.REDIS_URL, 'REDIS_URL');
   assert(
-    redis.protocol === 'redis:',
-    `${file} has an invalid REDIS_URL protocol`,
+    database.protocol === 'postgresql:' && redis.protocol === 'redis:',
+    `apps/backend/${name} has an invalid DATABASE_URL or REDIS_URL protocol`,
   );
   assert(
     database.hostname === '127.0.0.1' && redis.hostname === '127.0.0.1',
-    `${file} requires loopback services`,
+    `apps/backend/${name} requires loopback services`,
   );
   assert(
-    env.POSTGRES_PASSWORD &&
-      decodeURIComponent(database.password) === env.POSTGRES_PASSWORD &&
-      decodeURIComponent(database.username) === env.POSTGRES_USER &&
-      decodeURIComponent(database.pathname.slice(1)) === env.POSTGRES_DB &&
-      (database.port || '5432') === env.POSTGRES_PORT,
-    `${file} PostgreSQL settings and DATABASE_URL disagree`,
+    docker.POSTGRES_PASSWORD &&
+      decodeURIComponent(database.password) === docker.POSTGRES_PASSWORD &&
+      decodeURIComponent(database.username) === docker.POSTGRES_USER &&
+      decodeURIComponent(database.pathname.slice(1)) === docker.POSTGRES_DB &&
+      (database.port || '5432') === docker.POSTGRES_PORT,
+    `apps/backend/${name} DATABASE_URL disagrees with infra/docker/${name}`,
   );
   assert(
-    (redis.port || '6379') === env.REDIS_PORT,
-    `${file} Redis port settings disagree`,
+    (redis.port || '6379') === docker.REDIS_PORT,
+    `apps/backend/${name} REDIS_URL disagrees with infra/docker/${name}`,
   );
-  log(`PASS Environment settings in ${file}`);
+}
+
+const templates = loadEnvSet('.env.example');
+for (const dir of envDirs) {
+  assert(templates[dir], `${dir}/.env.example is missing`);
+}
+checkEnvSet(templates, '.env.example');
+log('PASS Environment templates');
+
+const local = loadEnvSet('.env');
+for (const [dir, env] of Object.entries(local)) {
+  const missing = Object.keys(templates[dir]).filter((key) => !(key in env));
+  assert.equal(
+    missing.length,
+    0,
+    `${dir}/.env is missing ${missing.join(', ')}`,
+  );
+}
+if (Object.keys(local).length === envDirs.length) {
+  checkEnvSet(local, '.env');
+  log('PASS Local environment files');
+} else {
+  log('SKIP Local environment files incomplete. Run pnpm env:init.');
 }
 
 const ignored = [
-  '.env',
-  'apps/student/.env.production',
+  ...envDirs.map((dir) => `${dir}/.env`),
+  'apps/student-app/.env.production',
   'node_modules/example',
-  'apps/api/dist/example.js',
+  'apps/backend/dist/example.js',
 ];
 for (const path of ignored) {
   execFileSync('git', ['check-ignore', '--quiet', '--', path]);
 }
-const templateIgnore = spawnSync('git', [
-  'check-ignore',
-  '--quiet',
-  '--',
-  '.env.example',
-]);
-assert.equal(templateIgnore.status, 1, '.env.example must stay trackable');
+for (const dir of envDirs) {
+  const template = `${dir}/.env.example`;
+  const result = spawnSync('git', ['check-ignore', '--quiet', '--', template]);
+  assert.equal(result.status, 1, `${template} must stay trackable`);
+}
 log('PASS Git ignore rules');

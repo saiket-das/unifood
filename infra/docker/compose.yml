@@ -5,7 +5,7 @@ services:
     image: postgres:18.7-trixie
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-umfood}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the local .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in infra/docker/.env}
       POSTGRES_DB: ${POSTGRES_DB:-umfood_dev}
     ports:
       - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'

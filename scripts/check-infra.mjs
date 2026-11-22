@@ -9,7 +9,7 @@ function localUrl(variable, protocol) {
   try {
     url = new URL(env[variable]);
   } catch {
-    throw new Error(`Set a valid ${variable} in .env`);
+    throw new Error(`Set a valid ${variable} in apps/backend/.env`);
   }
   if (url.hostname !== '127.0.0.1' || url.protocol !== protocol) {
     throw new Error(`${variable} must use ${protocol} on 127.0.0.1`);
@@ -65,7 +65,7 @@ for (const [index, result] of results.entries()) {
     log(`PASS ${label}`);
   } else {
     error(
-      `FAIL ${label} (${result.reason.code ?? result.reason.name}). Check .env and Docker Compose.`,
+      `FAIL ${label} (${result.reason.code ?? result.reason.name}). Check apps/backend/.env and infra/docker/.env.`,
     );
     process.exitCode = 1;
   }

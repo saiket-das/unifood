@@ -160,16 +160,19 @@ A monorepo is recommended.
 ``` text
 um-food/
 ├── apps/
-│   ├── api/
-│   │   └── src/
-│   │       ├── modules/
-│   │       ├── common/
-│   │       ├── config/
-│   │       └── main.ts
-│   ├── worker/
-│   │   └── src/
-│   ├── student/
-│   ├── restaurant/
+│   ├── backend/
+│   │   ├── src/
+│   │   │   ├── modules/
+│   │   │   ├── common/
+│   │   │   ├── config/
+│   │   │   ├── main.ts        # API entrypoint
+│   │   │   └── worker.ts      # background worker entrypoint
+│   │   └── prisma/
+│   │       ├── schema.prisma
+│   │       ├── migrations/
+│   │       └── seed.ts
+│   ├── student-app/
+│   ├── restaurant-pos/
 │   └── admin/
 ├── packages/
 │   ├── contracts/
@@ -177,12 +180,8 @@ um-food/
 │   ├── validation/
 │   ├── ui/
 │   └── config/
-├── prisma/
-│   ├── schema.prisma
-│   ├── migrations/
-│   └── seed.ts
 ├── infra/
-│   ├── docker/
+│   ├── docker/          # compose.yml for local Postgres and Redis
 │   └── deployment/
 ├── docs/
 │   ├── APP_FLOW.md
@@ -190,7 +189,6 @@ um-food/
 │   ├── PRD.md
 │   ├── SCHEMA.md
 │   └── TRD.md
-├── docker-compose.yml
 └── README.md
 ```
 

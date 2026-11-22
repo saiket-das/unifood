@@ -4,11 +4,10 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import reactHooks from 'eslint-plugin-react-hooks';
 import tseslint from 'typescript-eslint';
 
-const webApps = ['student', 'restaurant', 'admin'];
+const webApps = ['student-app', 'restaurant-pos', 'admin'];
 
 export default defineConfig(
   globalIgnores([
-    'dev branch/**',
     '**/.next/**',
     '**/coverage/**',
     '**/dist/**',
@@ -21,7 +20,7 @@ export default defineConfig(
     extends: [js.configs.recommended],
   },
   {
-    files: ['apps/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}', 'prisma/**/*.ts'],
+    files: ['apps/**/*.{ts,tsx}', 'packages/**/*.{ts,tsx}'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
   },
   webApps.map((app) => ({

@@ -1,5 +1,5 @@
 {
-  "name": "@um-food/student",
+  "name": "@um-food/restaurant-pos",
   "version": "0.0.0",
   "private": true,
   "dependencies": {
