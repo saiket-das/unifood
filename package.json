@@ -1,0 +1,36 @@
+{
+  "name": "um-food",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.22.3 <25",
+    "pnpm": "11.25.0"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "env:init": "node scripts/init-env.mjs",
+    "check:structure": "node scripts/check-structure.mjs",
+    "lint:setup": "eslint eslint.config.mjs scripts",
+    "check:setup": "node scripts/check-setup.mjs && pnpm check:structure && pnpm lint:setup && pnpm format:check",
+    "infra:config": "docker compose -f infra/docker/compose.yml config --quiet",
+    "dev:infra": "docker compose -f infra/docker/compose.yml up -d --wait --wait-timeout 120",
+    "stop:infra": "docker compose -f infra/docker/compose.yml stop",
+    "infra:ps": "docker compose -f infra/docker/compose.yml ps",
+    "infra:logs": "docker compose -f infra/docker/compose.yml logs postgres redis",
+    "check:infra": "node --env-file=apps/backend/.env scripts/check-infra.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.4.6",
+    "@types/node": "catalog:",
+    "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "ioredis": "catalog:",
+    "pg": "catalog:",
+    "prettier": "3.10.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0"
+  }
+}

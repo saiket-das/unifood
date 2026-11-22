@@ -1,0 +1,28 @@
+{
+  "name": "@um-food/backend",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@nestjs/common": "catalog:",
+    "@nestjs/config": "12.1.1",
+    "@nestjs/core": "catalog:",
+    "@nestjs/platform-express": "12.6.0",
+    "@nestjs/platform-socket.io": "12.6.0",
+    "@nestjs/swagger": "12.1.2",
+    "@nestjs/websockets": "12.6.0",
+    "@prisma/adapter-pg": "catalog:",
+    "@prisma/client": "catalog:",
+    "bullmq": "catalog:",
+    "ioredis": "catalog:",
+    "pg": "catalog:",
+    "reflect-metadata": "catalog:",
+    "rxjs": "catalog:"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "12.6.0",
+    "@types/node": "catalog:",
+    "@types/pg": "catalog:",
+    "prisma": "7.10.1"
+  }
+}

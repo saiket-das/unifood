@@ -1,0 +1,8 @@
+*.json text eol=lf
+/README.md text eol=lf
+*.mjs text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+.env.example text eol=lf
+.nvmrc text eol=lf
+.prettierrc text eol=lf
