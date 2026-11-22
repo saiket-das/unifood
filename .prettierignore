@@ -1,0 +1,15 @@
+# Preserve the existing specifications and branch documentation.
+/docs/
+/CLAUDE.md
+/SECURITY.md
+/apps/admin-dashboard/README.md
+/apps/backend/README.md
+/apps/restaurant-pos/README.md
+/apps/student-app/README.md
+/packages/README.md
+pnpm-lock.yaml
+**/generated/
+**/.next/
+**/coverage/
+**/dist/
+**/out/

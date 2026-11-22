@@ -1,8 +1,11 @@
 # UM Food --- Product and Delivery Plan
 
 **Document:** Product Plan\
-**Version:** 1.0\
+**Version:** 1.1\
 **Status:** Proposed baseline
+
+
+**Change history:** 1.1 — Daily menu confirmation and online availability; self pickup and provisional rider delivery with guarded kitchen release, payment boundaries and recovery.
 
 ## 1. Product vision
 
@@ -86,6 +89,8 @@ offer capture. - Student offer selection. - Atomic rider assignment. -
 Pickup and delivery status. - Delivery fee record separate from food
 payment. - Manual fallback if Telegram is unavailable.
 
+**P0 availability and delivery safety** — Daily staff menu confirmation; individual/bulk item controls and audit; independent online pause/resume; realtime updates and sold-out display; server cart/checkout revalidation; provisional delivery, restaurant preconfirmation, rider assignment before kitchen release, configurable deadlines, explicit fallback and cancellation paths. Self Pickup maps to TAKEAWAY; DELIVERY uses rider offers. Manual availability is not inventory reservation. Full inventory and automatic decrement remain later scope.
+
 ### 5.2 Should have --- P1
 
 -   Location-aware discovery.
@@ -98,7 +103,6 @@ payment. - Manual fallback if Telegram is unavailable.
 -   Order preparation estimates.
 -   Rider performance history.
 -   Reorder.
--   Restaurant item availability controls.
 -   Offline-tolerant POS order queue with safe synchronisation.
 
 ### 5.3 Later --- P2/P3
@@ -135,7 +139,8 @@ Interview:
 -   Current order-taking and POS process.
 -   Dine-in table and open-bill process.
 -   How staff add items and custom prices.
--   Menu and availability update process.
+-   Menu and availability update process, daily opening ownership, business-day cutoff, online pause and capacity-confirmation response times.
+-   Acceptable cash versus manually confirmed transfer timing, cancellation and refund decisions at each delivery stage.
 -   Peak-hour order volume.
 -   Kitchen workflow and preparation stations.
 -   Current payment methods.
@@ -198,7 +203,7 @@ availability and scope changes.
   6       Recommendations and personalisation            2--4 weeks
   7       Pilot hardening and launch                     2--3 weeks
 
-Some work can run in parallel. Do not treat these ranges as guaranteed
+Availability and tenant/audit foundation precede student checkout; payment rules, provisional state and outbox precede Telegram dispatch and guarded kitchen release. Pilot delivery follows end-to-end concurrency and failure testing. Some work can run in parallel. Do not treat these ranges as guaranteed
 deadlines.
 
 ## 8. Suggested team responsibilities
@@ -258,6 +263,11 @@ explicit.
 -   Median delivery duration.
 -   Dispute rate.
 
+-   Daily menu confirmation and online pause duration.
+-   Sold-out checkout conflicts and stale-update recovery.
+-   Preconfirmation and selection timeout rates, no-rider fallback choices, payment delays and urgent reassignments.
+-   Kitchen releases without prerequisites (target zero).
+
 ### Recommendations
 
 -   Recommendation impression-to-click rate.
@@ -305,10 +315,15 @@ downloads.
                                       and privacy review
   -----------------------------------------------------------------------
 
+Pilot testing must measure the proposed 30–45s restaurant, 60–90s offer, 30–60s student selection and 15–30s assignment windows and tune configuration. Validate staff opening routines, missed WebSocket recovery, payment confirmation delays, no-rider choices and rider cancellation before/after preparation. Risks include stale manual availability, unconfirmed payments, missed deadlines and post-preparation cancellations; mitigate with final checks, visible holds, durable retries and operator escalation.
+
 ## 11. Launch gates
 
 Do not launch broadly until:
 
+-   Daily confirmation, online pause and tenant-scoped audited availability work; walk-in POS remains usable.
+-   Sold-out checkout and final delivery checks, payment holds, timeouts, retry/conversion and pre/post-preparation cancellation are tested.
+-   No delivery ticket is released without final acceptance, one active rider and satisfied payment conditions.
 -   Pilot restaurants have agreed to participate.
 -   Campus and business permissions have been checked.
 -   Restaurant staff can complete core POS workflows.

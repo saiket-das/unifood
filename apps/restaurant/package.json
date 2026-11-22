@@ -1,0 +1,15 @@
+{
+  "name": "@um-food/restaurant",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:"
+  }
+}

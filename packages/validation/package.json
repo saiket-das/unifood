@@ -1,0 +1,8 @@
+{
+  "name": "@um-food/validation",
+  "version": "0.0.0",
+  "private": true,
+  "dependencies": {
+    "zod": "4.6.7"
+  }
+}

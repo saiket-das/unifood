@@ -1,0 +1,32 @@
+{
+  "name": "um-food",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=24.22.3 <25",
+    "pnpm": "11.25.0"
+  },
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint:setup": "eslint eslint.config.mjs scripts",
+    "check:setup": "node scripts/check-setup.mjs && pnpm lint:setup && pnpm format:check",
+    "infra:config": "docker compose config --quiet",
+    "dev:infra": "docker compose up -d --wait --wait-timeout 120",
+    "stop:infra": "docker compose stop",
+    "check:infra": "node --env-file=.env scripts/check-infra.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@next/eslint-plugin-next": "16.4.6",
+    "@types/node": "catalog:",
+    "eslint": "10.15.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "ioredis": "catalog:",
+    "pg": "catalog:",
+    "prettier": "3.10.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.73.0"
+  }
+}
